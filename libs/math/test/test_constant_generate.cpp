@@ -5,7 +5,6 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-
 #ifdef _MSC_VER
 #  pragma warning (disable : 4127) // conditional expression is constant.
 #  pragma warning (disable : 4512) // assignment operator could not be generated.
@@ -15,8 +14,9 @@
 
 // To add new constants, add a function that calculates the value of the constant to
 // boost/math/constants/calculate_constants.hpp
+// See http://www.boost.org/doc/libs/release/libs/math/doc/html/math_toolkit/new_const.html
 
-#include <boost/math/constants/generate.hpp>
+#include <boost/math/constants/generate.hpp> // Requires /modular-boost/libs/math/include_private in search path.
 #include <boost/math/constants/calculate_constants.hpp>
 
 int main()
@@ -27,6 +27,7 @@ int main()
    BOOST_CONSTANTS_GENERATE(twothirds);
    BOOST_CONSTANTS_GENERATE(two_thirds);
    BOOST_CONSTANTS_GENERATE(three_quarters);
+   BOOST_CONSTANTS_GENERATE(sixth);
    // two and related.
    BOOST_CONSTANTS_GENERATE(root_two);
    BOOST_CONSTANTS_GENERATE(root_three);
@@ -58,7 +59,7 @@ int main()
    BOOST_CONSTANTS_GENERATE(root_one_div_pi);
    BOOST_CONSTANTS_GENERATE(pi_minus_three);
    BOOST_CONSTANTS_GENERATE(four_minus_pi);
-   BOOST_CONSTANTS_GENERATE(pow23_four_minus_pi);
+   //BOOST_CONSTANTS_GENERATE(pow23_four_minus_pi);
 
    BOOST_CONSTANTS_GENERATE(pi_pow_e);
    BOOST_CONSTANTS_GENERATE(pi_sqr);
@@ -70,6 +71,7 @@ int main()
    // Euler's e and related.
    BOOST_CONSTANTS_GENERATE(e);
    BOOST_CONSTANTS_GENERATE(exp_minus_half);
+   BOOST_CONSTANTS_GENERATE(exp_minus_one);
 
    BOOST_CONSTANTS_GENERATE(e_pow_pi);
    BOOST_CONSTANTS_GENERATE(root_e);
@@ -95,8 +97,6 @@ int main()
       BOOST_CONSTANTS_GENERATE(euler);
       BOOST_CONSTANTS_GENERATE(one_div_euler);
       BOOST_CONSTANTS_GENERATE(euler_sqr);
-
-
  //  BOOST_CONSTANTS_GENERATE(gamma);
  //  BOOST_CONSTANTS_GENERATE(one_div_gamma);
  //  BOOST_CONSTANTS_GENERATE(gamma_sqr);

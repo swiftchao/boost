@@ -23,7 +23,6 @@
 #include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/include/at.hpp>
 #include <boost/fusion/include/value_at.hpp>
-#include <boost/detail/iterator.hpp>
 #include <boost/variant.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/mpl/bool.hpp>
@@ -385,7 +384,7 @@ namespace boost { namespace spirit { namespace lex { namespace lexertl
         token_value_type& value() { return value_; }
         token_value_type const& value() const { return value_; }
 
-        bool has_value() const { return value_; }
+        bool has_value() const { return !!value_; }
 
 #if BOOST_WORKAROUND(BOOST_MSVC, == 1600)
         // workaround for MSVC10 which has problems copying a default 
@@ -533,7 +532,7 @@ namespace boost { namespace spirit { namespace lex { namespace lexertl
             base_type;
 
     protected: 
-        //  If no additional token value types are given, the the token will 
+        //  If no additional token value types are given, the token will 
         //  hold no token value at all as the base class already has the 
         //  iterator pair of the matched range in the underlying input sequence. 
         //  Otherwise the token value is stored as a variant and will 

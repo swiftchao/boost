@@ -14,6 +14,9 @@ project boost/atomic/test
       <threading>multi
       <library>/boost/thread//boost_thread
       <library>/boost/atomic//boost_atomic
+      <target-os>windows:<define>BOOST_USE_WINDOWS_H
+      <target-os>windows:<define>_WIN32_WINNT=0x0500
+      <toolset>gcc,<target-os>windows:<linkflags>"-lkernel32"
     ;
 
 test-suite atomic
@@ -22,4 +25,8 @@ test-suite atomic
       [ run atomicity.cpp ]
       [ run ordering.cpp ]
       [ run lockfree.cpp ]
+      [ compile-fail cf_arith_void_ptr.cpp ]
+      [ compile-fail cf_arith_func_ptr.cpp ]
+      [ compile-fail cf_arith_mem_ptr.cpp ]
+      [ compile c_implicit_ctor.cpp ]
     ;

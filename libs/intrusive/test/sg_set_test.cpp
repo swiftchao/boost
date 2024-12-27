@@ -9,143 +9,139 @@
 // See http://www.boost.org/libs/intrusive for documentation.
 //
 /////////////////////////////////////////////////////////////////////////////
-#include <boost/intrusive/detail/config_begin.hpp>
 #include <boost/intrusive/sg_set.hpp>
 #include "itestvalue.hpp"
+#include "bptr_value.hpp"
 #include "smart_ptr.hpp"
+#include "bs_test_common.hpp"
 #include "generic_set_test.hpp"
-
-namespace boost { namespace intrusive { namespace test {
-
-#if !defined (BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-template<class T, class O1, class O2, class O3, class O4>
-#else
-template<class T, class ...Options>
-#endif
-struct has_rebalance<boost::intrusive::sg_set<T,
-   #if !defined (BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-   O1, O2, O3, O4
-   #else
-   Options...
-   #endif
-> >
-{
-   static const bool value = true;
-};
-
-#if !defined (BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-template<class T, class O1, class O2, class O3, class O4>
-#else
-template<class T, class ...Options>
-#endif
-struct has_insert_before<boost::intrusive::sg_set<T,
-   #if !defined (BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-   O1, O2, O3, O4
-   #else
-   Options...
-   #endif
-> >
-{
-   static const bool value = true;
-};
-
-}}}
-
 
 using namespace boost::intrusive;
 
-struct my_tag;
-
-template<class VoidPointer>
-struct hooks
+template < class ValueTraits, bool FloatingPoint, bool DefaultHolder, bool Map >
+struct rebinder
 {
-   typedef bs_set_base_hook<void_pointer<VoidPointer> >     base_hook_type;
-   typedef bs_set_member_hook<void_pointer<VoidPointer> >   member_hook_type;
-   typedef member_hook_type   auto_member_hook_type;
-   struct auto_base_hook_type
-      :  bs_set_base_hook<void_pointer<VoidPointer>, tag<my_tag> >
-   {};
+   typedef tree_rebinder_common<ValueTraits, DefaultHolder, Map> common_t;
+   typedef typename ValueContainer< typename ValueTraits::value_type >::type value_cont_type;
+
+   template < class Option1 =void
+            , class Option2 =void
+            >
+   struct container
+   {
+      typedef sg_set
+         < typename common_t::value_type
+         , value_traits<ValueTraits>
+         , floating_point<FloatingPoint>
+         , typename common_t::holder_opt
+         , typename common_t::key_of_value_opt
+         , Option1
+         , Option2
+         > type;
+      BOOST_STATIC_ASSERT((key_type_tester<typename common_t::key_of_value_opt, type>::value));
+   };
 };
 
-template< class ValueType
-        , class Option1 =void
-        , class Option2 =void
-        , class Option3 =void
-        >
-struct GetContainer
+enum HookType
 {
-   typedef boost::intrusive::sg_set
-      < ValueType
-      , Option1
-      , Option2
-      , Option3
-      > type;
+   Base,
+   Member,
+   NonMember
 };
 
-template< class ValueType
-        , class Option1 =void
-        , class Option2 =void
-        , class Option3 =void
-        >
-struct GetContainerFixedAlpha
-{
-   typedef boost::intrusive::sg_set
-      < ValueType
-      , Option1
-      , Option2
-      , Option3
-      , boost::intrusive::floating_point<false>
-      > type;
-};
+template<class VoidPointer, bool FloatingPoint, bool DefaultHolder, bool Map, HookType Type>
+class test_main_template;
 
-template<class VoidPointer>
-class test_main_template
+template<class VoidPointer, bool FloatingPoint, bool DefaultHolder, bool Map>
+class test_main_template<VoidPointer, FloatingPoint, DefaultHolder, Map, Base>
 {
    public:
-   int operator()()
+   static void execute()
    {
-      using namespace boost::intrusive;
-      typedef testvalue<hooks<VoidPointer> , true> value_type;
-
-      test::test_generic_set < typename detail::get_base_value_traits
-                  < value_type
-                  , typename hooks<VoidPointer>::base_hook_type
-                  >::type
-                , GetContainer
-                >::test_all();
-      test::test_generic_set < typename detail::get_member_value_traits
-                  < value_type
-                  , member_hook< value_type
-                               , typename hooks<VoidPointer>::member_hook_type
-                               , &value_type::node_
-                               >
-                  >::type
-                , GetContainer
-                >::test_all();
-
-      test::test_generic_set < typename detail::get_base_value_traits
-                  < value_type
-                  , typename hooks<VoidPointer>::base_hook_type
-                  >::type
-                , GetContainerFixedAlpha
-                >::test_all();
-      test::test_generic_set < typename detail::get_member_value_traits
-                  < value_type
-                  , member_hook< value_type
-                               , typename hooks<VoidPointer>::member_hook_type
-                               , &value_type::node_
-                               >
-                  >::type
-                , GetContainerFixedAlpha
-                >::test_all();
-      return 0;
+      typedef testvalue_traits< bs_hooks<VoidPointer> > testval_traits_t;
+      //base
+      typedef typename testval_traits_t::base_value_traits  base_hook_t;
+      test::test_generic_set
+         < rebinder<base_hook_t, FloatingPoint, DefaultHolder, Map>
+         >::test_all();
    }
 };
 
-int main( int, char* [] )
+template<class VoidPointer, bool FloatingPoint, bool DefaultHolder, bool Map>
+class test_main_template<VoidPointer, FloatingPoint, DefaultHolder, Map, Member>
 {
-   test_main_template<void*>()();
-   test_main_template<boost::intrusive::smart_ptr<void> >()();
+   public:
+   static void execute()
+   {
+      typedef testvalue_traits< bs_hooks<VoidPointer> > testval_traits_t;
+      //member
+      typedef typename testval_traits_t::member_value_traits member_hook_t;
+      test::test_generic_set
+         < rebinder<member_hook_t, FloatingPoint, DefaultHolder, Map>
+         >::test_all();
+   }
+};
+
+template<class VoidPointer, bool FloatingPoint, bool DefaultHolder, bool Map>
+class test_main_template<VoidPointer, FloatingPoint, DefaultHolder, Map, NonMember>
+{
+   public:
+   static void execute()
+   {
+      typedef testvalue_traits< bs_hooks<VoidPointer> > testval_traits_t;
+      //nonmember
+      test::test_generic_set
+         < rebinder<typename testval_traits_t::nonhook_value_traits, FloatingPoint, DefaultHolder, Map>
+         >::test_all();
+   }
+};
+
+template < bool FloatingPoint, bool Map >
+struct test_main_template_bptr
+{
+   static void execute()
+   {
+      typedef BPtr_Value_Traits< Tree_BPtr_Node_Traits > value_traits;
+      typedef bounded_allocator< BPtr_Value >            allocator_type;
+
+      bounded_allocator_scope<allocator_type> bounded_scope; (void)bounded_scope;
+      test::test_generic_set
+         < rebinder< value_traits, FloatingPoint, true, Map>
+         >::test_all();
+   }
+};
+
+int main()
+{
+   //Combinations: VoidPointer x FloatingPoint x DefaultHolder x Map
+   //Minimize them selecting different combinations for raw and smart pointers
+   //Start with ('false', 'false', 'false') in sets and 'false', 'false', 'true' in multisets
+
+   //void pointer
+   test_main_template<void*, false, false, false, Base>::execute();
+   //test_main_template<void*, false, false, true>::execute();
+   test_main_template<void*, false, true, false, Member>::execute();
+   //test_main_template<void*, false, true,  true>::execute();
+   test_main_template<void*,  true, false, false, Base>::execute();
+   //test_main_template<void*,  true, false, true>::execute();
+   test_main_template<void*,  true, true, false, Member>::execute();
+   test_main_template<void*,  true, true,  true, NonMember>::execute();
+
+   //smart_ptr
+   //test_main_template<smart_ptr<void>, false, false, false>::execute();
+   test_main_template<smart_ptr<void>, false, false,  true, Base>::execute();
+   //test_main_template<smart_ptr<void>, false,  true, false>::execute();
+   test_main_template<smart_ptr<void>, false,  true,  true, Member>::execute();
+   //test_main_template<smart_ptr<void>,  true, false, false>::execute();
+   test_main_template<smart_ptr<void>,  true, false, true, NonMember>::execute();
+   //test_main_template<smart_ptr<void>,  true,  true, false>::execute();
+   //test_main_template<smart_ptr<void>,  true,  true,  true>::execute();
+
+   //bounded_ptr (bool FloatingPoint, bool Map)
+   test_main_template_bptr< false, false >::execute();
+   //test_main_template_bptr< false,  true >::execute();
+   //test_main_template_bptr<  true, false >::execute();
+   test_main_template_bptr<  true,  true >::execute();
+
    return boost::report_errors();
 }
-#include <boost/intrusive/detail/config_end.hpp>

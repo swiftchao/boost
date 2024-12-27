@@ -9,6 +9,9 @@
 // aschoedl contributed an improvement to the determination
 // of the Reference type parameter.
 //
+// Leonid Gershanovich reported Trac ticket 7376 about the dereference operator
+// requiring identical reference types due to using the ternary if.
+//
 // For more information, see http://www.boost.org/libs/range/
 //
 #ifndef BOOST_RANGE_DETAIL_JOIN_ITERATOR_HPP_INCLUDED
@@ -117,7 +120,8 @@ public:
         return *m_it;
     }
 
-    bool equal(const join_iterator_union& other, unsigned int selected) const
+    bool equal(const join_iterator_union& other,
+               unsigned int /*selected*/) const
     {
         return m_it == other.m_it;
     }
@@ -149,8 +153,12 @@ template<typename Iterator1
                                     typename iterator_reference<Iterator2>::type
                                 >::type
                             >::value,
-                            typename add_const<
-                                typename iterator_reference<Iterator1>::type
+                            typename add_reference<
+                                typename add_const<
+                                    typename remove_reference<
+                                        typename iterator_reference<Iterator1>::type
+                                    >::type
+                                >::type
                             >::type,
                             typename iterator_reference<Iterator1>::type
                         >::type

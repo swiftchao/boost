@@ -33,9 +33,8 @@ struct test_action
     test_action(char last)
       : last_(last) {}
 
-    void operator()(std::vector<char> const& v
-      , boost::spirit::unused_type
-      , boost::spirit::unused_type) const
+    template<typename Context>
+    void operator()(std::vector<char> const& v, Context const&, bool&) const
     {
         BOOST_TEST(v.size() == 4 &&
             v[0] == 'a' && v[1] == 'b' && v[2] == '1' && v[3] == last_);
@@ -46,11 +45,10 @@ struct test_action
 
 struct test_action_2
 {
-    typedef std::vector<boost::optional<char> > result_type;
+    typedef std::vector<boost::optional<char>	> result_type;
 
-    void operator()(result_type const& v
-      , boost::spirit::unused_type
-      , boost::spirit::unused_type) const
+    template<typename Context>
+    void operator()(result_type const& v, Context const&, bool&) const
     {
         BOOST_TEST(v.size() == 5 &&
             !v[0] && v[1] == 'a' && v[2] == 'b' && v[3] == '1' && v[4] == '2');
@@ -242,12 +240,15 @@ main()
     }
 
     {
+#ifdef SPIRIT_NO_COMPILE_CHECK
         //compile test only (bug_march_10_2011_8_35_am)
+        // TODO: does not work as intended with std <= c++03
         typedef boost::variant<double, std::string> value_type;
 
         using boost::spirit::qi::rule;
         using boost::spirit::qi::eps;
         rule<std::string::const_iterator, value_type()> r1 = r1 | eps;
+#endif
     }
 
     {

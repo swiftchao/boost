@@ -12,13 +12,19 @@
 #ifndef BOOST_PTR_CONTAINER_PTR_SET_HPP
 #define BOOST_PTR_CONTAINER_PTR_SET_HPP
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER >= 1200)
 # pragma once
 #endif
 
 #include <boost/ptr_container/indirect_fun.hpp>
 #include <boost/ptr_container/ptr_set_adapter.hpp>
+#include <boost/ptr_container/detail/ptr_container_disable_deprecated.hpp>
 #include <set>
+
+#if defined(BOOST_PTR_CONTAINER_DISABLE_DEPRECATED)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 namespace boost
 {
@@ -28,7 +34,7 @@ namespace boost
         class Key, 
         class Compare        = std::less<Key>,
         class CloneAllocator = heap_clone_allocator,
-        class Allocator      = std::allocator<void*>
+        class Allocator      = std::allocator<typename ptr_container_detail::void_ptr<Key>::type>
     >
     class ptr_set : 
         public ptr_set_adapter< Key, std::set<
@@ -154,5 +160,9 @@ namespace boost
     }
 
 }
+
+#if defined(BOOST_PTR_CONTAINER_DISABLE_DEPRECATED)
+#pragma GCC diagnostic pop
+#endif
 
 #endif

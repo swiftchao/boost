@@ -63,7 +63,7 @@ fixed_string_to_int(std::istreambuf_iterator<charT>& itr,
     itr++;
     j++;
   }
-  int_type i = -1;
+  int_type i = static_cast<int_type>(-1);
   // mr.cache will hold leading zeros. size() tells us when input is too short.
   if(mr.cache.size() < length) {
     return i;
@@ -111,7 +111,7 @@ var_string_to_int(std::istreambuf_iterator<charT>& itr,
     ++itr;
     ++j;
   }
-  int_type i = -1;
+  int_type i = static_cast<int_type>(-1);
   if(!s.empty()) {
     i = boost::lexical_cast<int_type>(s);
   }
@@ -659,8 +659,6 @@ class format_date_parser
              string_type format_str,
              match_results& mr) const
   {
-    bool use_current_char = false;
-    
     // skip leading whitespace
     while(std::isspace(*sitr) && sitr != stream_end) { ++sitr; } 
 
@@ -701,12 +699,7 @@ class format_date_parser
       }
       else {  //skip past chars in format and in buffer
         itr++;
-        if (use_current_char) {
-          use_current_char = false;
-        }
-        else {
-          sitr++;
-        }
+        sitr++;
       }
     }
     

@@ -21,7 +21,7 @@
 
 //#define BOOST_THREAD_VERSION 3
 #define BOOST_THREAD_VERSION 4
-#define BOOST_THREAD_USES_LOG
+//#define BOOST_THREAD_USES_LOG
 #define BOOST_THREAD_USES_LOG_THREAD_ID
 #include <boost/thread/detail/log.hpp>
 
@@ -32,6 +32,10 @@
 
 #if defined BOOST_THREAD_USES_CHRONO
 
+#ifdef BOOST_MSVC
+#pragma warning(disable: 4127) // conditional expression is constant
+#endif
+
 typedef boost::chrono::milliseconds ms;
 
 namespace boost
@@ -39,7 +43,7 @@ namespace boost
   template <typename OStream>
   OStream& operator<<(OStream& os , boost::future_status st )
   {
-    os << int(st) << " ";
+    os << underlying_cast<int>(st) << " ";
     return os;
   }
   template <typename T>

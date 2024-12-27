@@ -49,7 +49,6 @@
 // Handles broken standard libraries better than <iterator>
 #include <boost/detail/iterator.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/functional/hash_fwd.hpp>
 #include <algorithm>
 
 // FIXES for broken compilers
@@ -184,7 +183,7 @@ namespace boost {
 
         // check range (may be private because it is static)
         static BOOST_CONSTEXPR bool rangecheck (size_type i) {
-            return i > size() ? boost::throw_exception(std::out_of_range ("array<>: index out of range")), true : true;
+            return i >= size() ? boost::throw_exception(std::out_of_range ("array<>: index out of range")), true : true;
         }
 
     };
@@ -374,7 +373,7 @@ namespace boost {
 
    // Specific for boost::array: simply returns its elems data member.
    template <typename T, std::size_t N>
-   typename const detail::c_array<T,N>::type& get_c_array(const boost::array<T,N>& arg)
+   typename detail::c_array<T,N>::type const& get_c_array(const boost::array<T,N>& arg)
    {
        return arg.elems;
    }
@@ -412,6 +411,7 @@ namespace boost {
     }
 #endif
 
+    template <class It> std::size_t hash_range(It, It);
 
     template<class T, std::size_t N>
     std::size_t hash_value(const array<T,N>& arr)

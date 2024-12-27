@@ -1,6 +1,6 @@
-//  (C) Copyright Gennadiy Rozental 2005-2012.
+//  (C) Copyright Gennadiy Rozental 2001.
 //  Distributed under the Boost Software License, Version 1.0.
-//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
@@ -59,28 +59,33 @@ xml_report_formatter::test_unit_report_start( test_unit const& tu, std::ostream&
         descr = "passed";
     else if( tr.p_skipped )
         descr = "skipped";
+    else if( tr.p_timed_out )
+        descr = "timed-out";
     else if( tr.p_aborted )
         descr = "aborted";
     else
         descr = "failed";
 
-    ostr << '<' << ( tu.p_type == TUT_CASE ? "TestCase" : "TestSuite" ) 
-         << " name"     << attr_value() << tu.p_name.get()
-         << " result"   << attr_value() << descr
-         << " assertions_passed"        << attr_value() << tr.p_assertions_passed
-         << " assertions_failed"        << attr_value() << tr.p_assertions_failed
-         << " warnings_failed"          << attr_value() << tr.p_warnings_failed
-         << " expected_failures"        << attr_value() << tr.p_expected_failures;
+    ostr << '<' << ( tu.p_type == TUT_CASE ? "TestCase" : "TestSuite" )
+         << " name"                     << utils::attr_value() << tu.p_name.get()
+         << " result"                   << utils::attr_value() << descr
+         << " assertions_passed"        << utils::attr_value() << tr.p_assertions_passed
+         << " assertions_failed"        << utils::attr_value() << tr.p_assertions_failed
+         << " warnings_failed"          << utils::attr_value() << tr.p_warnings_failed
+         << " expected_failures"        << utils::attr_value() << tr.p_expected_failures
+            ;
 
     if( tu.p_type == TUT_SUITE ) {
-        ostr << " test_cases_passed"    << attr_value() << tr.p_test_cases_passed
-             << " test_cases_passed_with_warnings" << attr_value() << tr.p_test_cases_warned
-             << " test_cases_failed"    << attr_value() << tr.p_test_cases_failed
-             << " test_cases_skipped"   << attr_value() << tr.p_test_cases_skipped
-             << " test_cases_aborted"   << attr_value() << tr.p_test_cases_aborted;
+        ostr << " test_cases_passed"    << utils::attr_value() << tr.p_test_cases_passed
+             << " test_cases_passed_with_warnings" << utils::attr_value() << tr.p_test_cases_warned
+             << " test_cases_failed"    << utils::attr_value() << tr.p_test_cases_failed
+             << " test_cases_skipped"   << utils::attr_value() << tr.p_test_cases_skipped
+             << " test_cases_aborted"   << utils::attr_value() << tr.p_test_cases_aborted
+             << " test_cases_timed_out" << utils::attr_value() << tr.p_test_cases_timed_out
+             << " test_suites_timed_out"<< utils::attr_value() << tr.p_test_suites_timed_out
+             ;
     }
-             
-    
+
     ostr << '>';
 }
 
@@ -98,7 +103,7 @@ void
 xml_report_formatter::do_confirmation_report( test_unit const& tu, std::ostream& ostr )
 {
     test_unit_report_start( tu, ostr );
-    test_unit_report_finish( tu, ostr );    
+    test_unit_report_finish( tu, ostr );
 }
 
 //____________________________________________________________________________//

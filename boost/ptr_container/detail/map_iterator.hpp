@@ -12,7 +12,7 @@
 #ifndef BOOST_PTR_CONTAINER_MAP_ITERATOR_HPP
 #define BOOST_PTR_CONTAINER_MAP_ITERATOR_HPP
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER >= 1200)
 # pragma once
 #endif
 
@@ -48,8 +48,8 @@ namespace boost
             ref_pair( const RP* rp )
             : first(rp->first), second(rp->second)
             { }
-            
-            const ref_pair* const operator->() const
+
+            const ref_pair* operator->() const
             {
                 return this;
             }

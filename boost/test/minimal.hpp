@@ -1,19 +1,38 @@
-//  (C) Copyright Gennadiy Rozental 2002-2012.
+//  (C) Copyright Gennadiy Rozental 2001.
 //  Distributed under the Boost Software License, Version 1.0.
-//  (See accompanying file LICENSE_1_0.txt or copy at 
+//  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
-//  File        : $RCSfile$
-//
-//  Version     : $Revision$
-//
-//  Description : simple minimal testing definitions and implementation
+/// @file
+/// @brief Deprecated implementation of simple minimal testing
+/// @deprecated
+/// To convert to Unit Test Framework simply rewrite:
+/// @code
+/// #include <boost/test/minimal.hpp>
+///
+/// int test_main( int, char *[] )
+/// {
+///   ...
+/// }
+/// @endcode
+/// as
+/// @code
+/// #include <boost/test/included/unit_test.hpp>
+///
+/// BOOST_AUTO_TEST_CASE(test_main)
+/// {
+///   ...
+/// }
+/// @endcode
 // ***************************************************************************
 
 #ifndef BOOST_TEST_MINIMAL_HPP_071894GER
 #define BOOST_TEST_MINIMAL_HPP_071894GER
+
+#include <boost/config/header_deprecated.hpp>
+BOOST_HEADER_DEPRECATED( "Boost.Test minimal is deprecated. Please convert to the header only variant of Boost.Test." )
 
 #define BOOST_CHECK(exp)       \
   ( (exp)                      \
@@ -40,7 +59,7 @@
 #include <boost/test/utils/basic_cstring/io.hpp>
 
 // Boost
-#include <boost/cstdlib.hpp>            // for exit codes#include <boost/cstdlib.hpp>            // for exit codes
+#include <boost/cstdlib.hpp>            // for exit codes
 #include <boost/current_function.hpp>   // for BOOST_CURRENT_FUNCTION
 
 // STL
@@ -129,7 +148,7 @@ int BOOST_TEST_CALL_DECL main( int argc, char* argv[] )
     }
 
     std::cout << "\n**** no errors detected\n";
-    
+
     return boost::exit_success;
 }
 

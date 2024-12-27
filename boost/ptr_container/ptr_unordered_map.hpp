@@ -12,12 +12,18 @@
 #ifndef BOOST_PTR_CONTAINER_PTR_UNORDERED_MAP_HPP
 #define BOOST_PTR_CONTAINER_PTR_UNORDERED_MAP_HPP
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER >= 1200)
 # pragma once
 #endif
 
 #include <boost/unordered_map.hpp>
 #include <boost/ptr_container/ptr_map_adapter.hpp>
+#include <boost/ptr_container/detail/ptr_container_disable_deprecated.hpp>
+
+#if defined(BOOST_PTR_CONTAINER_DISABLE_DEPRECATED)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
 
 namespace boost
 {
@@ -247,5 +253,9 @@ namespace boost
 
 
 }
+
+#if defined(BOOST_PTR_CONTAINER_DISABLE_DEPRECATED)
+#pragma GCC diagnostic pop
+#endif
 
 #endif

@@ -16,7 +16,6 @@
 #include <cstdio>  // remove()
 #include <fstream>
 #include <cstdlib> // for rand()
-#include <cmath> // for fabs()
 #include <boost/config.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/limits.hpp>
@@ -25,7 +24,6 @@
 #if defined(BOOST_NO_STDC_NAMESPACE)
 namespace std{
     using ::rand; 
-    using ::fabs; 
     using ::remove;
     #if BOOST_WORKAROUND(BOOST_MSVC, >= 1400) && !defined(UNDER_CE)
         using ::numeric_limits;
@@ -130,7 +128,7 @@ template<class Archive>
 inline void save_construct_data(
     Archive & ar, 
     const A * a, 
-    const BOOST_PFTO unsigned int /* file_version */
+    const unsigned int /* file_version */
 ){
     // variable used for construction
     ar << boost::serialization::make_nvp("i", a->get_i());

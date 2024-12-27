@@ -1,23 +1,16 @@
-/*
-    Copyright 2012 Christian Henning
-    Use, modification and distribution are subject to the Boost Software License,
-    Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
-    http://www.boost.org/LICENSE_1_0.txt).
-*/
-
-/*************************************************************************************************/
-
+//
+// Copyright 2012 Christian Henning
+//
+// Distributed under the Boost Software License, Version 1.0
+// See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt
+//
 #ifndef BOOST_GIL_EXTENSION_TOOLBOX_COLOR_SPACES_HSL_HPP
 #define BOOST_GIL_EXTENSION_TOOLBOX_COLOR_SPACES_HSL_HPP
 
-////////////////////////////////////////////////////////////////////////////////////////
-/// \file hsl.hpp
-/// \brief Support for HSL color space
-/// \author Christian Henning \n
-///
-/// \date 2012 \n
-///
-////////////////////////////////////////////////////////////////////////////////////////
+#include <boost/gil/color_convert.hpp>
+#include <boost/gil/typedefs.hpp>
+#include <boost/gil/detail/mp11.hpp>
 
 namespace boost{ namespace gil {
 
@@ -26,25 +19,27 @@ namespace boost{ namespace gil {
 namespace hsl_color_space
 {
 /// \brief Hue
-struct hue_t {};    
+struct hue_t {};
 /// \brief Saturation
 struct saturation_t {};
 /// \brief Lightness
-struct lightness_t {}; 
+struct lightness_t {};
 }
 /// \}
 
 /// \ingroup ColorSpaceModel
-typedef mpl::vector3< hsl_color_space::hue_t
-                    , hsl_color_space::saturation_t
-                    , hsl_color_space::lightness_t
-                    > hsl_t;
+using hsl_t = mp11::mp_list
+<
+    hsl_color_space::hue_t,
+    hsl_color_space::saturation_t,
+    hsl_color_space::lightness_t
+>;
 
 /// \ingroup LayoutModel
-typedef layout<hsl_t> hsl_layout_t;
+using hsl_layout_t = layout<hsl_t>;
 
 
-GIL_DEFINE_ALL_TYPEDEFS( 32f, hsl );
+GIL_DEFINE_ALL_TYPEDEFS(32f, float32_t, hsl)
 
 /// \ingroup ColorConvert
 /// \brief RGB to HSL
@@ -56,17 +51,17 @@ struct default_color_converter_impl< rgb_t, hsl_t >
    {
       using namespace hsl_color_space;
 
-      // only bits32f for hsl is supported
-      bits32f temp_red   = channel_convert<bits32f>( get_color( src, red_t()   ));
-      bits32f temp_green = channel_convert<bits32f>( get_color( src, green_t() ));
-      bits32f temp_blue  = channel_convert<bits32f>( get_color( src, blue_t()  ));
+      // only float32_t for hsl is supported
+      float32_t temp_red   = channel_convert<float32_t>( get_color( src, red_t()   ));
+      float32_t temp_green = channel_convert<float32_t>( get_color( src, green_t() ));
+      float32_t temp_blue  = channel_convert<float32_t>( get_color( src, blue_t()  ));
 
-      bits32f hue, saturation, lightness;
+      float32_t hue, saturation, lightness;
 
-      bits32f min_color = (std::min)( temp_red, (std::min)( temp_green, temp_blue ));
-      bits32f max_color = (std::max)( temp_red, (std::max)( temp_green, temp_blue ));
+      float32_t min_color = (std::min)( temp_red, (std::min)( temp_green, temp_blue ));
+      float32_t max_color = (std::max)( temp_red, (std::max)( temp_green, temp_blue ));
 
-      if( abs( min_color - max_color ) < 0.001 )
+      if( std::abs( min_color - max_color ) < 0.001 )
       {
          // rgb color is gray
 
@@ -79,7 +74,7 @@ struct default_color_converter_impl< rgb_t, hsl_t >
       else
       {
 
-         bits32f diff = max_color - min_color;
+         float32_t diff = max_color - min_color;
 
          // lightness calculation
 
@@ -89,43 +84,43 @@ struct default_color_converter_impl< rgb_t, hsl_t >
 
          if( lightness < 0.5f )
          {
-            saturation = diff 
+            saturation = diff
                        / ( min_color + max_color );
          }
          else
          {
-            saturation = ( max_color - min_color ) 
+            saturation = ( max_color - min_color )
                        / ( 2.f - diff );
 
          }
 
          // hue calculation
-         if( abs( max_color - temp_red ) < 0.0001f )
+         if( std::abs( max_color - temp_red ) < 0.0001f )
          {
             // max_color is red
-            hue = ( temp_green - temp_blue ) 
+            hue = ( temp_green - temp_blue )
                 / diff;
 
          }
-         else if( abs( max_color - temp_green) < 0.0001f )
+         else if( std::abs( max_color - temp_green) < 0.0001f )
          {
             // max_color is green
             // 2.0 + (b - r) / (maxColor - minColor);
-            hue = 2.f 
-                + ( temp_blue - temp_red ) 
+            hue = 2.f
+                + ( temp_blue - temp_red )
                 / diff;
 
          }
          else
          {
             // max_color is blue
-            hue = 4.f 
-                + ( temp_red - temp_blue ) 
+            hue = 4.f
+                + ( temp_red - temp_blue )
                 / diff;
          }
 
          hue /= 6.f;
-         
+
          if( hue < 0.f )
          {
             hue += 1.f;
@@ -148,9 +143,9 @@ struct default_color_converter_impl<hsl_t,rgb_t>
    {
       using namespace hsl_color_space;
 
-      bits32f red, green, blue;
+      float32_t red, green, blue;
 
-      if( abs( get_color( src, saturation_t() )) < 0.0001  )
+      if( std::abs( get_color( src, saturation_t() )) < 0.0001  )
       {
          // If saturation is 0, the color is a shade of gray
          red   = get_color( src, lightness_t() );
@@ -163,29 +158,29 @@ struct default_color_converter_impl<hsl_t,rgb_t>
          float tempr, tempg, tempb;
 
          //Set the temporary values
-         if( get_color( src, lightness_t() ) < 0.5 ) 
+         if( get_color( src, lightness_t() ) < 0.5 )
          {
             temp2 = get_color( src, lightness_t() )
                   * ( 1.f + get_color( src, saturation_t() ) );
          }
          else
          {
-            temp2 = ( get_color( src, lightness_t() ) + get_color( src, saturation_t() )) 
+            temp2 = ( get_color( src, lightness_t() ) + get_color( src, saturation_t() ))
                   - ( get_color( src, lightness_t() ) * get_color( src, saturation_t() ));
          }
 
          temp1 = 2.f
-               * get_color( src, lightness_t() ) 
+               * get_color( src, lightness_t() )
                - temp2;
 
-         tempr = get_color( src, hue_t() ) + 1.f / 3.f;    
+         tempr = get_color( src, hue_t() ) + 1.f / 3.f;
 
          if( tempr > 1.f )
          {
             tempr--;
          }
 
-         tempg = get_color( src, hue_t() );     
+         tempg = get_color( src, hue_t() );
          tempb = get_color( src, hue_t() ) - 1.f / 3.f;
 
          if( tempb < 0.f )
@@ -193,7 +188,7 @@ struct default_color_converter_impl<hsl_t,rgb_t>
             tempb++;
          }
 
-         //Red     
+         //Red
          if( tempr < 1.f / 6.f )
          {
             red = temp1 + ( temp2 - temp1 ) * 6.f * tempr;
@@ -204,7 +199,7 @@ struct default_color_converter_impl<hsl_t,rgb_t>
          }
          else if( tempr < 2.f / 3.f )
          {
-            red = temp1 + (temp2 - temp1) 
+            red = temp1 + (temp2 - temp1)
                 * (( 2.f / 3.f ) - tempr) * 6.f;
          }
          else
@@ -212,7 +207,7 @@ struct default_color_converter_impl<hsl_t,rgb_t>
             red = temp1;
          }
 
-         //Green       
+         //Green
          if( tempg < 1.f / 6.f )
          {
             green = temp1 + ( temp2 - temp1 ) * 6.f * tempg;
@@ -231,7 +226,7 @@ struct default_color_converter_impl<hsl_t,rgb_t>
             green = temp1;
          }
 
-         //Blue    
+         //Blue
          if( tempb < 1.f / 6.f )
          {
             blue = temp1 + (temp2 - temp1) * 6.f * tempb;
@@ -242,7 +237,7 @@ struct default_color_converter_impl<hsl_t,rgb_t>
          }
          else if( tempb < 2.f / 3.f )
          {
-            blue = temp1 + (temp2 - temp1) 
+            blue = temp1 + (temp2 - temp1)
                  * (( 2.f / 3.f ) - tempb) * 6.f;
          }
          else
@@ -263,4 +258,4 @@ struct default_color_converter_impl<hsl_t,rgb_t>
 } // namespace gil
 } // namespace boost
 
-#endif // BOOST_GIL_EXTENSION_TOOLBOX_COLOR_SPACES_HSL_HPP
+#endif

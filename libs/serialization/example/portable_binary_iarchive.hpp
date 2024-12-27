@@ -27,7 +27,6 @@
 #include <boost/archive/archive_exception.hpp>
 #include <boost/archive/basic_binary_iprimitive.hpp>
 #include <boost/archive/detail/common_iarchive.hpp>
-#include <boost/archive/shared_ptr_helper.hpp>
 #include <boost/archive/detail/register_archive.hpp>
 
 #include "portable_binary_archive.hpp"
@@ -39,16 +38,17 @@ class portable_binary_iarchive_exception :
     public boost::archive::archive_exception
 {
 public:
-    typedef enum {
-        incompatible_integer_size 
-    } exception_code;
+    enum exception_code {
+        incompatible_integer_size
+    } m_exception_code ;
     portable_binary_iarchive_exception(exception_code c = incompatible_integer_size ) :
-        boost::archive::archive_exception(boost::archive::archive_exception::other_exception)
+        boost::archive::archive_exception(boost::archive::archive_exception::other_exception),
+        m_exception_code(c)
     {}
     virtual const char *what( ) const throw( )
     {
         const char *msg = "programmer error";
-        switch(code){
+        switch(m_exception_code){
         case incompatible_integer_size:
             msg = "integer cannot be represented";
             break;
@@ -74,8 +74,6 @@ class portable_binary_iarchive :
     public boost::archive::detail::common_iarchive<
         portable_binary_iarchive
     >
-    ,
-    public boost::archive::detail::shared_ptr_helper
     {
     typedef boost::archive::basic_binary_iprimitive<
         portable_binary_iarchive,
@@ -150,21 +148,15 @@ protected:
     void load(unsigned char & t){
         this->primitive_base_t::load(t);
     }
-    // intermediate level to support override of operators
-    // fot templates in the absence of partial function 
-    // template ordering
     typedef boost::archive::detail::common_iarchive<portable_binary_iarchive> 
         detail_common_iarchive;
     template<class T>
-    void load_override(T & t, BOOST_PFTO int){
-        this->detail_common_iarchive::load_override(t, 0);
+    void load_override(T & t){
+        this->detail_common_iarchive::load_override(t);
     }
-    void load_override(boost::archive::class_name_type & t, int);
+    void load_override(boost::archive::class_name_type & t);
     // binary files don't include the optional information 
-    void load_override(
-        boost::archive::class_id_optional_type & /* t */, 
-        int
-    ){}
+    void load_override(boost::archive::class_id_optional_type &){}
 
     void init(unsigned int flags);
 public:

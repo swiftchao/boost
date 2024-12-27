@@ -5,6 +5,10 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
+// This file was modified by Oracle on 2017.
+// Modifications copyright (c) 2017, Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -24,6 +28,7 @@
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/detail/overlay/get_turns.hpp>
+#include <boost/geometry/policies/robustness/get_rescale_policy.hpp>
 
 #include <boost/geometry/algorithms/detail/overlay/debug_turn_info.hpp>
 
@@ -42,8 +47,8 @@
 
 
 // To test that "get_turns" can be called using additional information
-template <typename P>
-struct my_turn_op : public bg::detail::overlay::turn_operation
+template <typename Point, typename SegmentRatio>
+struct my_turn_op : public bg::detail::overlay::turn_operation<Point, SegmentRatio>
 {
 };
 
@@ -55,16 +60,36 @@ struct test_get_turns
     template<typename G1, typename G2>
     static void apply(std::string const& id,
             std::size_t expected_count,
-            G1 const& g1, G2 const& g2, double precision)
+            G1 const& g1, G2 const& g2, double /*precision*/)
     {
-            typedef bg::detail::overlay::turn_info
+        typedef typename bg::point_type<G2>::type point_type;
+        
+        typedef typename bg::strategy::intersection::services::default_strategy
             <
-                typename bg::point_type<G2>::type
+                typename bg::cs_tag<G1>::type
+            >::type strategy_type;
+        
+        typedef typename bg::rescale_policy_type<point_type>::type
+            rescale_policy_type;
+
+        strategy_type strategy;
+
+        rescale_policy_type rescale_policy
+                = bg::get_rescale_policy<rescale_policy_type>(g1, g2);
+
+        typedef bg::detail::overlay::turn_info
+            <
+                point_type,
+                typename bg::detail::segment_ratio_type<point_type, rescale_policy_type>::type
             > turn_info;
         std::vector<turn_info> turns;
 
+
         bg::detail::get_turns::no_interrupt_policy policy;
-        bg::get_turns<false, false, bg::detail::overlay::assign_null_policy>(g1, g2, turns, policy);
+        bg::get_turns
+            <
+                false, false, bg::detail::overlay::assign_null_policy
+            >(g1, g2, strategy, rescale_policy, turns, policy);
 
         BOOST_CHECK_MESSAGE(
             expected_count == boost::size(turns),
@@ -111,7 +136,7 @@ struct test_get_turns
                         << ": " << bg::operation_char(turn.operations[0].operation)
                         << " " << bg::operation_char(turn.operations[1].operation)
                         << " (" << bg::method_char(turn.method) << ")"
-                        << (turn.is_discarded() ? " (discarded) " : turn.blocked() ? " (blocked)" : "")
+                        << (turn.discarded ? " (discarded) " : turn.blocked() ? " (blocked)" : "")
                         ;
 
                     offsets[p] += 10;
@@ -133,7 +158,7 @@ struct test_get_turns
 template<typename G1, typename G2>
 struct test_get_turns
 {
-    inline static void apply(std::string const& id, std::size_t expected_count, 
+    inline static void apply(std::string const& id, std::size_t expected_count,
                 std::string const& wkt1, std::string const& wkt2,
                 double precision = 0.001)
     {
@@ -184,9 +209,6 @@ void test_all()
     typedef bg::model::polygon<P> polygon;
     typedef bg::model::linestring<P> linestring;
     typedef bg::model::box<P> box;
-
-    // Expected count, average x, average y
-    typedef boost::tuple<int> Tuple;
 
 #ifdef BOOST_GEOMETRY_DEBUG_INTERSECTION
     std::cout << string_from_type<T>::name() << std::endl;
@@ -334,8 +356,6 @@ void test_ccw()
 {
     typedef bg::model::point<T, 2, bg::cs::cartesian> P;
     typedef bg::model::polygon<P, false, true> polygon;
-    typedef boost::tuple<int> Tuple;
-
 
     test_get_turns<polygon, polygon>::apply("ccw_1",
                 6,
@@ -352,7 +372,6 @@ void test_open()
 {
     typedef bg::model::point<T, 2, bg::cs::cartesian> P;
     typedef bg::model::polygon<P, true, false> polygon;
-    typedef boost::tuple<int> Tuple;
 
     test_get_turns<polygon, polygon>::apply("open_1",
                 6,

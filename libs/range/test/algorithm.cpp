@@ -107,12 +107,15 @@ template<typename Rng>
 void test_random_algorithms(Rng & rng, std::random_access_iterator_tag)
 {
     typedef BOOST_DEDUCED_TYPENAME boost::range_iterator<Rng>::type iterator;
-    typedef BOOST_DEDUCED_TYPENAME boost::range_value<Rng>::type value_type;
-    typedef BOOST_DEDUCED_TYPENAME boost::range_size<Rng>::type size_type BOOST_RANGE_UNUSED;
-    typedef BOOST_DEDUCED_TYPENAME boost::iterator_category<iterator>::type iterator_category;
 
-    
-    
+    typedef BOOST_DEDUCED_TYPENAME boost::range_value<Rng>::type value_type;
+
+    typedef BOOST_DEDUCED_TYPENAME boost::range_size<Rng>::type
+                                        size_type BOOST_RANGE_UNUSED;
+
+    typedef BOOST_DEDUCED_TYPENAME boost::iterator_category<iterator>::type
+                                        iterator_category BOOST_RANGE_UNUSED;
+
     // just make sure these compile (for now)
     if(0)
     {
@@ -454,7 +457,7 @@ void simple_compile_test()
 
     BOOST_RANGE_RETURNS_TEST2( find_end, v, std::less<int>() );
     BOOST_RANGE_RETURNS_TEST2( find_first_of, v, std::less<int>() );
-    BOOST_RANGE_RETURNS_TEST2( search, v, std::less<int>() );
+    BOOST_RANGE_RETURNS_TEST2( boost::search, v, std::less<int>() );
     BOOST_RANGE_RETURNS_TEST2( lower_bound, 0, std::less<int>() );
     BOOST_RANGE_RETURNS_TEST2( upper_bound, 0, std::less<int>() );
 

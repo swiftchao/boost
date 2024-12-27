@@ -19,6 +19,7 @@
 
 #include <boost/random/random_device.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
+#include <iostream>
 
 int main() {
     /*<< We first define the characters that we're going
@@ -30,7 +31,7 @@ int main() {
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "1234567890"
         "!@#$%^&*()"
-        "`~-_=+[{]{\\|;:'\",<.>/? ");
+        "`~-_=+[{]}\\|;:'\",<.>/? ");
     /*<< We use __random_device as a source of entropy, since we want
          passwords that are not predictable.
     >>*/

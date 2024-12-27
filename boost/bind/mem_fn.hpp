@@ -3,7 +3,7 @@
 
 // MS compatible compilers support #pragma once
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
 # pragma once
 #endif
 
@@ -49,7 +49,7 @@ template<class V> struct mf
 #undef BOOST_MEM_FN_CC
 #undef BOOST_MEM_FN_NAME
 
-#ifdef BOOST_MEM_FN_ENABLE_CDECL
+#if defined(BOOST_MEM_FN_ENABLE_CDECL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) inner_##X##_cdecl
 #define BOOST_MEM_FN_CC __cdecl
@@ -61,7 +61,7 @@ template<class V> struct mf
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_STDCALL
+#if defined(BOOST_MEM_FN_ENABLE_STDCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) inner_##X##_stdcall
 #define BOOST_MEM_FN_CC __stdcall
@@ -73,7 +73,7 @@ template<class V> struct mf
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_FASTCALL
+#if defined(BOOST_MEM_FN_ENABLE_FASTCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) inner_##X##_fastcall
 #define BOOST_MEM_FN_CC __fastcall
@@ -102,7 +102,7 @@ template<> struct mf<void>
 #undef BOOST_MEM_FN_CC
 #undef BOOST_MEM_FN_NAME
 
-#ifdef BOOST_MEM_FN_ENABLE_CDECL
+#if defined(BOOST_MEM_FN_ENABLE_CDECL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) inner_##X##_cdecl
 #define BOOST_MEM_FN_CC __cdecl
@@ -155,7 +155,7 @@ template<> struct mf<void>
 #undef BOOST_MEM_FN_NAME2
 #undef BOOST_MEM_FN_CC
 
-#ifdef BOOST_MEM_FN_ENABLE_CDECL
+#if defined(BOOST_MEM_FN_ENABLE_CDECL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_cdecl
 #define BOOST_MEM_FN_NAME2(X) inner_##X##_cdecl
@@ -217,7 +217,7 @@ namespace _mfi
 #undef BOOST_MEM_FN_CC
 #undef BOOST_MEM_FN_NAME
 
-#ifdef BOOST_MEM_FN_ENABLE_CDECL
+#if defined(BOOST_MEM_FN_ENABLE_CDECL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_cdecl
 #define BOOST_MEM_FN_CC __cdecl
@@ -229,7 +229,7 @@ namespace _mfi
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_STDCALL
+#if defined(BOOST_MEM_FN_ENABLE_STDCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_stdcall
 #define BOOST_MEM_FN_CC __stdcall
@@ -241,7 +241,7 @@ namespace _mfi
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_FASTCALL
+#if defined(BOOST_MEM_FN_ENABLE_FASTCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_fastcall
 #define BOOST_MEM_FN_CC __fastcall
@@ -270,7 +270,7 @@ namespace _mfi
 #undef BOOST_MEM_FN_NAME
 #undef BOOST_MEM_FN_CC
 
-#ifdef BOOST_MEM_FN_ENABLE_CDECL
+#if defined(BOOST_MEM_FN_ENABLE_CDECL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_cdecl
 #define BOOST_MEM_FN_CC __cdecl
@@ -282,7 +282,7 @@ namespace _mfi
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_STDCALL
+#if defined(BOOST_MEM_FN_ENABLE_STDCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_stdcall
 #define BOOST_MEM_FN_CC __stdcall
@@ -294,7 +294,7 @@ namespace _mfi
 
 #endif
 
-#ifdef BOOST_MEM_FN_ENABLE_FASTCALL
+#if defined(BOOST_MEM_FN_ENABLE_FASTCALL) && !defined(_M_X64)
 
 #define BOOST_MEM_FN_NAME(X) X##_fastcall
 #define BOOST_MEM_FN_CC __fastcall
@@ -352,7 +352,7 @@ public:
         return call(u, &u);
     }
 
-#if !BOOST_WORKAROUND(__MWERKS__, < 0x3200)
+#if !BOOST_WORKAROUND(BOOST_MSVC, <= 1300) && !BOOST_WORKAROUND(__MWERKS__, < 0x3200)
 
     R & operator()(T & t) const
     {

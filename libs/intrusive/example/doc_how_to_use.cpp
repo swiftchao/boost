@@ -23,6 +23,9 @@ class MyClass : public list_base_hook<>
    list_member_hook<> member_hook_;
 
    MyClass(int i) :  int_(i)  {}
+   //<-
+   int get_int() const { return int_; }
+   //->
 };
 
 //Define a list that will store MyClass using the base hook
@@ -36,7 +39,6 @@ typedef list<MyClass, MemberOption> MemberList;
 int main()
 {
    typedef std::vector<MyClass>::iterator VectIt;
-   typedef std::vector<MyClass>::reverse_iterator VectRit;
 
    //Create several MyClass objects, each one with a different value
    std::vector<MyClass> values;

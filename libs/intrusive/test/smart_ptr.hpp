@@ -11,10 +11,10 @@
 #ifndef BOOST_INTRUSIVE_SMART_PTR_HPP
 #define BOOST_INTRUSIVE_SMART_PTR_HPP
 
-#include <boost/iterator.hpp>
 #include <boost/intrusive/pointer_plus_bits.hpp>
-#include <boost/pointer_cast.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
+#include <boost/intrusive/detail/iterator.hpp>
+#include <boost/move/adl_move_swap.hpp>
 
 #if (defined _MSC_VER)
 #  pragma once
@@ -37,8 +37,7 @@ struct empty_type{};
 
 template<class T>
 struct random_it
-: public boost::iterator<std::random_access_iterator_tag,
-                         T, std::ptrdiff_t, T*, T&>
+: public iterator<std::random_access_iterator_tag, T, std::ptrdiff_t, T*, T&>
 {
    typedef const T*           const_pointer;
    typedef const T&           const_reference;
@@ -128,6 +127,12 @@ class smart_ptr
       :  m_ptr(ptr.m_ptr)
    {}
 
+   pointer get() const
+   {  return m_ptr;  }
+
+   void set(pointer p)
+   {  m_ptr = p;  }
+
    //!Pointer-like -> operator. It can return 0 pointer. Never throws.
    pointer operator->() const
    {  return m_ptr; }
@@ -191,6 +196,10 @@ class smart_ptr
    //!Never throws.
    bool operator! () const
    {  return m_ptr == 0;   }
+
+   //!swap
+   friend void swap(smart_ptr& x, smart_ptr& y)
+   {  boost::adl_move_swap(x.m_ptr, y.m_ptr);   }
 };
 
 //!smart_ptr<T1> == smart_ptr<T2>. Never throws.
@@ -251,48 +260,6 @@ template<class T, class T2>
 inline std::ptrdiff_t operator- (const smart_ptr<T> &pt, const smart_ptr<T2> &pt2)
 {  return pt.operator->()- pt2.operator->();   }
 
-//!swap specialization
-template<class T>
-inline void swap (smart_ptr<T> &pt,
-                  smart_ptr<T> &pt2)
-{
-   typename smart_ptr<T>::value_type *ptr = pt.operator->();
-   pt = pt2;
-   pt2 = ptr;
-}
-
-//!Simulation of static_cast between pointers. Never throws.
-template<class T, class U>
-inline smart_ptr<T>
-   static_pointer_cast(const smart_ptr<U> & r)
-{
-   return smart_ptr<T>(r, detail::static_cast_tag());
-}
-
-//!Simulation of const_cast between pointers. Never throws.
-template<class T, class U>
-inline smart_ptr<T>const_pointer_cast(smart_ptr<U> const & r)
-{
-   return smart_ptr<T>(r, detail::const_cast_tag());
-}
-
-//!Simulation of dynamic_cast between pointers. Never throws.
-template<class T, class U>
-inline smart_ptr<T>
-   dynamic_pointer_cast(smart_ptr<U> const & r)
-{
-   return smart_ptr<T>
-            (r, detail::dynamic_cast_tag());
-}
-
-//!Simulation of reinterpret_cast between pointers. Never throws.
-template<class T, class U>
-inline smart_ptr<T>
-   reinterpret_pointer_cast(smart_ptr<U> const & r)
-{
-   return smart_ptr<T>(r, detail::reinterpret_cast_tag());
-}
-
 }  //namespace intrusive {
 }  //namespace boost {
 
@@ -315,25 +282,26 @@ struct pointer_plus_bits<smart_ptr<T>, NumBits>
 
    static pointer get_pointer(const pointer &n)
    {
-      return  pointer_traits<pointer>::pointer_to
-         (*pointer_plus_bits<T*, NumBits>::get_pointer(n.operator->()));
+      pointer p;
+      p.set(pointer_plus_bits<T*, NumBits>::get_pointer(n.get()));
+      return p;
    }
 
    static void set_pointer(pointer &n, pointer p)
    {
-      T *raw_n = n.operator->();
+      T *raw_n = n.get();
       pointer_plus_bits<T*, NumBits>::set_pointer(raw_n, p.operator->());
-      n = pointer_traits<pointer>::pointer_to(*raw_n);
+      n.set(raw_n);
    }
 
    static std::size_t get_bits(const pointer &n)
-   {  return pointer_plus_bits<T*, NumBits>::get_bits(n.operator->());  }
+   {  return pointer_plus_bits<T*, NumBits>::get_bits(n.get());  }
 
    static void set_bits(pointer &n, std::size_t c)
    {
       T *raw_n = n.operator->();
       pointer_plus_bits<T*, NumBits>::set_bits(raw_n, c);
-      n = pointer_traits<pointer>::pointer_to(*raw_n);
+      n.set(raw_n);
    }
 };
 

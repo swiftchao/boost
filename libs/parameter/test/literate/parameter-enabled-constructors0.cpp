@@ -1,37 +1,36 @@
 
-#line 1248 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
 #include <boost/parameter.hpp>
 #include <iostream>
-#line 1234 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
+
 BOOST_PARAMETER_NAME(name)
 BOOST_PARAMETER_NAME(index)
 
 struct myclass_impl
 {
-    template <class ArgumentPack>
+    template <typename ArgumentPack>
     myclass_impl(ArgumentPack const& args)
     {
-        std::cout << "name = " << args[_name]
-                  << "; index = " << args[_index | 42]
-                  << std::endl;
+        std::cout << "name = " << args[_name];
+        std::cout << "; index = " << args[_index | 42];
+        std::cout << std::endl;
     }
 };
 
-#line 1261 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
 struct myclass : myclass_impl
 {
     BOOST_PARAMETER_CONSTRUCTOR(
         myclass, (myclass_impl), tag
-      , (required (name,*)) (optional (index,*))) // no semicolon
+      , (required (name,*)) (optional (index,*))
+    ) // no semicolon
 };
 
+#include <boost/core/lightweight_test.hpp>
 
-#line 1275 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
-int main() {
-#line 1272 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
-myclass x("bob", 3);                     // positional
-myclass y(_index = 12, _name = "sally"); // named
-myclass z("june");                       // positional/defaulted
-#line 1275 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
+int main()
+{
+    myclass x("bob", 3);                     // positional
+    myclass y(_index = 12, _name = "sally"); // named
+    myclass z("june");                       // positional/defaulted
+    return boost::report_errors();
 }
 

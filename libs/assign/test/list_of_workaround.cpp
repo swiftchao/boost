@@ -12,7 +12,7 @@
 #include <boost/detail/workaround.hpp>
 
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-#  pragma warn -8091 // supress warning in Boost.Test
+#  pragma warn -8091 // suppress warning in Boost.Test
 #  pragma warn -8057 // unused argument argc/argv in Boost.Test
 #endif
 
@@ -30,6 +30,7 @@ void check_list_of()
     using namespace std;
     using namespace boost;
     using namespace boost::assign;
+    using boost::array;
     
     vector<int>         v = list_of(1)(2)(3)(4).to_container( v );
     set<int>            s = list_of(1)(2)(3)(4).to_container( s );  

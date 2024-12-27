@@ -10,6 +10,7 @@
 
 // For more information, see http://www.boost.org
 
+#include <boost/bind.hpp>
 #include <boost/optional.hpp>
 #include <boost/test/minimal.hpp>
 #include <boost/signals2.hpp>
@@ -29,7 +30,7 @@ struct max_or_default {
     {
       try
       {
-        if(max == false) max = *first;
+        if(!max) max = *first;
         else max = (*first > max.get())? *first : max;
       }
       catch(const boost::bad_weak_ptr &)
@@ -133,7 +134,7 @@ test_one_arg()
   boost::signals2::signal<int (int value), max_or_default<int> > s1;
 
   s1.connect(std::negate<int>());
-  s1.connect(std::bind1st(std::multiplies<int>(), 2));
+  s1.connect(boost::bind(std::multiplies<int>(), 2, _1));
 
   BOOST_CHECK(s1(1) == 2);
   BOOST_CHECK(s1(-1) == 1);
@@ -152,8 +153,8 @@ test_signal_signal_connect()
   {
     signal_type s2;
     s1.connect(s2);
-    s2.connect(std::bind1st(std::multiplies<int>(), 2));
-    s2.connect(std::bind1st(std::multiplies<int>(), -3));
+    s2.connect(boost::bind(std::multiplies<int>(), 2, _1));
+    s2.connect(boost::bind(std::multiplies<int>(), -3, _1));
 
     BOOST_CHECK(s2(-3) == 9);
     BOOST_CHECK(s1(3) == 6);
@@ -312,6 +313,23 @@ test_swap()
   BOOST_CHECK(sig2() == 2);
 }
 
+void test_move()
+{
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+  typedef boost::signals2::signal<int (), dummy_combiner> signal_type;
+  signal_type sig1(dummy_combiner(1));
+  BOOST_CHECK(sig1() == 1);
+  signal_type sig2(dummy_combiner(2));
+  BOOST_CHECK(sig2() == 2);
+
+  sig1 = std::move(sig2);
+  BOOST_CHECK(sig1() == 2);
+
+  signal_type sig3(std::move(sig1));
+  BOOST_CHECK(sig3() == 2);
+#endif // !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+}
+
 int
 test_main(int, char* [])
 {
@@ -324,5 +342,6 @@ test_main(int, char* [])
   test_typedefs_etc();
   test_set_combiner();
   test_swap();
+  test_move();
   return 0;
 }

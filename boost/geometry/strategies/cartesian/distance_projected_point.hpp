@@ -1,8 +1,14 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
-// Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
-// Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
+// Copyright (c) 2008-2014 Bruno Lalande, Paris, France.
+// Copyright (c) 2008-2014 Barend Gehrels, Amsterdam, the Netherlands.
+// Copyright (c) 2009-2014 Mateusz Loskot, London, UK.
+
+// This file was modified by Oracle on 2014, 2018, 2019.
+// Modifications copyright (c) 2014-2019, Oracle and/or its affiliates.
+
+// Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
@@ -16,8 +22,9 @@
 
 
 #include <boost/concept_check.hpp>
+#include <boost/core/ignore_unused.hpp>
 #include <boost/mpl/if.hpp>
-#include <boost/type_traits.hpp>
+#include <boost/type_traits/is_void.hpp>
 
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/point_type.hpp>
@@ -30,6 +37,8 @@
 #include <boost/geometry/strategies/distance.hpp>
 #include <boost/geometry/strategies/default_distance_result.hpp>
 #include <boost/geometry/strategies/cartesian/distance_pythagoras.hpp>
+#include <boost/geometry/strategies/cartesian/point_in_point.hpp>
+#include <boost/geometry/strategies/cartesian/intersection.hpp>
 
 #include <boost/geometry/util/select_coordinate_type.hpp>
 
@@ -43,7 +52,6 @@ namespace boost { namespace geometry
 
 namespace strategy { namespace distance
 {
-
 
 /*!
 \brief Strategy for distance point to segment
@@ -71,6 +79,28 @@ template
 class projected_point
 {
 public :
+    typedef within::cartesian_point_point equals_point_point_strategy_type;
+
+    typedef intersection::cartesian_segments
+        <
+            CalculationType
+        > relate_segment_segment_strategy_type;
+
+    static inline relate_segment_segment_strategy_type get_relate_segment_segment_strategy()
+    {
+        return relate_segment_segment_strategy_type();
+    }
+
+    typedef within::cartesian_winding
+        <
+            void, void, CalculationType
+        > point_in_geometry_strategy_type;
+
+    static inline point_in_geometry_strategy_type get_point_in_geometry_strategy()
+    {
+        return point_in_geometry_strategy_type();
+    }
+
     // The three typedefs below are necessary to calculate distances
     // from segments defined in integer coordinates.
 
@@ -89,8 +119,6 @@ public :
                   >::type
           >
     {};
-
-public :
 
     template <typename Point, typename PointOfSegment>
     inline typename calculation_type<Point, PointOfSegment>::type
@@ -112,8 +140,8 @@ public :
         // For convenience
         typedef fp_point_type fp_vector_type;
 
-        /* 
-            Algorithm [p1: (x1,y1), p2: (x2,y2), p: (px,py)]
+        /*
+            Algorithm [p: (px,py), p1: (x1,y1), p2: (x2,y2)]
             VECTOR v(x2 - x1, y2 - y1)
             VECTOR w(px - x1, py - y1)
             c1 = w . v
@@ -124,15 +152,16 @@ public :
 
         // v is multiplied below with a (possibly) FP-value, so should be in FP
         // For consistency we define w also in FP
-        fp_vector_type v, w;
+        fp_vector_type v, w, projected;
 
         geometry::convert(p2, v);
         geometry::convert(p, w);
-        subtract_point(v, p1);
-        subtract_point(w, p1);
+        geometry::convert(p1, projected);
+        subtract_point(v, projected);
+        subtract_point(w, projected);
 
         Strategy strategy;
-        boost::ignore_unused_variable_warning(strategy);
+        boost::ignore_unused(strategy);
 
         calculation_type const zero = calculation_type();
         calculation_type const c1 = dot_product(w, v);
@@ -149,13 +178,18 @@ public :
         // See above, c1 > 0 AND c2 > c1 so: c2 != 0
         calculation_type const b = c1 / c2;
 
-        fp_point_type projected;
-        geometry::convert(p1, projected);
         multiply_value(v, b);
         add_point(projected, v);
 
         return strategy.apply(p, projected);
     }
+
+    template <typename CT>
+    inline CT vertical_or_meridian(CT const& lat1, CT const& lat2) const
+    {
+        return lat1 - lat2;
+    }
+
 };
 
 #ifndef DOXYGEN_NO_STRATEGY_SPECIALIZATIONS
@@ -174,11 +208,6 @@ struct return_type<projected_point<CalculationType, Strategy>, P, PS>
     : projected_point<CalculationType, Strategy>::template calculation_type<P, PS>
 {};
 
-template <typename CalculationType, typename Strategy>
-struct strategy_point_point<projected_point<CalculationType, Strategy> >
-{
-    typedef Strategy type;
-};
 
 
 template <typename CalculationType, typename Strategy>
@@ -230,7 +259,11 @@ public :
 // of point-to-segment or point-to-linestring.
 // Convenient for geographic coordinate systems especially.
 template <typename Point, typename PointOfSegment, typename Strategy>
-struct default_strategy<segment_tag, Point, PointOfSegment, cartesian_tag, cartesian_tag, Strategy>
+struct default_strategy
+    <
+        point_tag, segment_tag, Point, PointOfSegment,
+        cartesian_tag, cartesian_tag, Strategy
+    >
 {
     typedef strategy::distance::projected_point
     <
@@ -240,12 +273,26 @@ struct default_strategy<segment_tag, Point, PointOfSegment, cartesian_tag, carte
                 boost::is_void<Strategy>,
                 typename default_strategy
                     <
-                        point_tag, Point, PointOfSegment,
+                        point_tag, point_tag, Point, PointOfSegment,
                         cartesian_tag, cartesian_tag
                     >::type,
                 Strategy
             >::type
     > type;
+};
+
+template <typename PointOfSegment, typename Point, typename Strategy>
+struct default_strategy
+    <
+        segment_tag, point_tag, PointOfSegment, Point,
+        cartesian_tag, cartesian_tag, Strategy
+    >
+{
+    typedef typename default_strategy
+        <
+            point_tag, segment_tag, Point, PointOfSegment,
+            cartesian_tag, cartesian_tag, Strategy
+        >::type type;
 };
 
 

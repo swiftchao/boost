@@ -6,6 +6,9 @@
 <!--
                      Copyright (c) 2001 Jeremy Siek
               Copyright (c) 2003-2004, 2008 Gennaro Prota
+                    Copyright (c) 2014 Ahmed Charles
+                 Copyright (c) 2014 Riccardo Marcangelo
+                    Copyright (c) 2018 Evgeny Shulgin
 
        Distributed under the Boost Software License, Version 1.0.
           (See accompanying file LICENSE_1_0.txt or copy at
@@ -88,7 +91,7 @@ constructor of the <tt>dynamic_bitset</tt>.</p>
 
 <p>The <tt>dynamic_bitset</tt> class is nearly identical to the
 <a href=
-"http://www.sgi.com/tech/stl/bitset.html"><tt>std::bitset</tt></a>
+"https://boost.org/sgi/stl/bitset.html"><tt>std::bitset</tt></a>
 class. The difference is that the size of the
 <tt>dynamic_bitset</tt> (the number of bits) is specified at
 run-time during the construction of a <tt>dynamic_bitset</tt>
@@ -141,8 +144,11 @@ public:
 
     typedef bool <a href="#const_reference">const_reference</a>;
 
+    <a href=
+"#cons0">dynamic_bitset</a>();
+
     explicit <a href=
-"#cons1">dynamic_bitset</a>(const Allocator&amp; alloc = Allocator());
+"#cons1">dynamic_bitset</a>(const Allocator&amp; alloc);
 
     explicit <a href=
 "#cons2">dynamic_bitset</a>(size_type num_bits, unsigned long value = 0,
@@ -163,16 +169,23 @@ public:
     <a href=
 "#cons5">dynamic_bitset</a>(const dynamic_bitset&amp; b);
 
+    <a href=
+"#move-cons">dynamic_bitset</a>(dynamic_bitset&amp;&amp; b);
+
     void <a href="#swap">swap</a>(dynamic_bitset&amp; b);
 
     dynamic_bitset&amp; <a href=
 "#assign">operator=</a>(const dynamic_bitset&amp; b);
+
+    dynamic_bitset&amp; <a href=
+"#move-assign">operator=</a>(dynamic_bitset&amp;&amp; b);
 
     allocator_type <a href="#get_allocator">get_allocator()</a> const;
 
     void <a href=
 "#resize">resize</a>(size_type num_bits, bool value = false);
     void <a href="#clear">clear</a>();
+    void <a href="#pop_back">pop_back</a>();
     void <a href="#push_back">push_back</a>(bool bit);
     void <a href="#append1">append</a>(Block block);
 
@@ -188,27 +201,35 @@ public:
     dynamic_bitset <a href="#op-sl">operator&lt;&lt;</a>(size_type n) const;
     dynamic_bitset <a href="#op-sr">operator&gt;&gt;</a>(size_type n) const;
 
+    dynamic_bitset&amp; <a href="#set3">set</a>(size_type n, size_type len, bool val);
     dynamic_bitset&amp; <a href="#set2">set</a>(size_type n, bool val = true);
     dynamic_bitset&amp; <a href="#set1">set</a>();
+    dynamic_bitset&amp; <a href="#reset3">reset</a>(size_type n, size_type len);
     dynamic_bitset&amp; <a href="#reset2">reset</a>(size_type n);
     dynamic_bitset&amp; <a href="#reset1">reset</a>();
+    dynamic_bitset&amp; <a href="#flip3">flip</a>(size_type n, size_type len);
     dynamic_bitset&amp; <a href="#flip2">flip</a>(size_type n);
     dynamic_bitset&amp; <a href="#flip1">flip</a>();
     bool <a href="#test">test</a>(size_type n) const;
+    bool <a href="#test">test_set</a>(size_type n, bool val = true);
+    bool <a href="#all">all</a>() const;
     bool <a href="#any">any</a>() const;
     bool <a href="#none">none</a>() const;
     dynamic_bitset <a href="#op-not">operator~</a>() const;
-    size_type <a href="#count">count</a>() const;
+    size_type <a href="#count">count</a>() const noexcept;
 
     reference <a href="#bracket">operator[]</a>(size_type pos);
     bool <a href="#const-bracket">operator[]</a>(size_type pos) const;
 
     unsigned long <a href="#to_ulong">to_ulong</a>() const;
 
-    size_type <a href="#size">size</a>() const;
-    size_type <a href="#num_blocks">num_blocks</a>() const;
-    size_type <a href="#max_size">max_size</a>() const;
-    bool <a href="#empty">empty</a>() const;
+    size_type <a href="#size">size</a>() const noexcept;
+    size_type <a href="#num_blocks">num_blocks</a>() const noexcept;
+    size_type <a href="#max_size">max_size</a>() const noexcept;
+    bool <a href="#empty">empty</a>() const noexcept;
+    size_type <a href="#capacity">capacity</a>() const noexcept;
+    void <a href="#reserve">reserve</a>(size_type num_bits);
+    void <a href="#shrink_to_fit">shrink_to_fit</a>();
 
     bool <a href="#is_subset_of">is_subset_of</a>(const dynamic_bitset&amp; a) const;
     bool <a href="#is_proper_subset_of">is_proper_subset_of</a>(const dynamic_bitset&amp; a) const;
@@ -322,7 +343,7 @@ input/output and some bitwise operations).
 <h3><a id="rationale">Rationale</a></h3>
 <p>
 <tt>dynamic_bitset</tt> is not a <a href=
-"http://www.sgi.com/tech/stl/Container.html">Container</a> and
+"https://boost.org/sgi/stl/Container.html">Container</a> and
 does not provide iterators for the following reason:
 </p>
 
@@ -337,7 +358,7 @@ people try to use iterators from <tt>std::vector&lt;bool&gt;</tt>
 with a Standard algorithm such as <tt>std::search</tt>. The
 <tt>std::search</tt> requirements say that the iterator must be a
 <a href=
-"http://www.sgi.com/tech/stl/ForwardIterator.html">Forward
+"https://boost.org/sgi/stl/ForwardIterator.html">Forward
 Iterator</a>, but the <tt>std::vector&lt;bool&gt;::iterator</tt>
 does not meet this requirement because of the proxy reference.
 Depending on the implementation, they may or not be a compile
@@ -349,14 +370,14 @@ by not pretending to be a container.</li>
 
 <p>Some people prefer the name "toggle" to "flip". The name
 "flip" was chosen because that is the name used in <a href=
-"http://www.sgi.com/tech/stl/bitset.html"><tt>std::bitset</tt></a>.
+"https://boost.org/sgi/stl/bitset.html"><tt>std::bitset</tt></a>.
 In fact, most of the function names for <tt>dynamic_bitset</tt>
 were chosen for this reason.</p>
 
 <p><tt>dynamic_bitset</tt> does not throw exceptions when a
 precondition is violated (as is done in <tt>std::bitset</tt>).
 Instead <tt>assert</tt> is used. See the guidelines for <a href=
-"http://www.boost.org/more/error_handling.html">Error and Exception Handling</a>
+"http://www.boost.org/community/error_handling.html">Error and Exception Handling</a>
 for the explanation.</p>
 
 <h3><a id="header-files">Header Files</a></h3>
@@ -391,13 +412,13 @@ in the header <a href=
 </table>
 <h3><a id="concepts-modeled">Concepts Modeled</a></h3>
 <a href=
-"http://www.sgi.com/tech/stl/Assignable.html">Assignable</a>, <a
+"https://boost.org/sgi/stl/Assignable.html">Assignable</a>, <a
 href=
-"http://www.sgi.com/tech/stl/DefaultConstructible.html">Default
+"https://boost.org/sgi/stl/DefaultConstructible.html">Default
 Constructible</a>, <a href=
-"http://www.sgi.com/tech/stl/EqualityComparable.html">Equality
+"https://boost.org/sgi/stl/EqualityComparable.html">Equality
 Comparable</a>, <a href=
-"http://www.sgi.com/tech/stl/LessThanComparable.html">LessThan
+"https://boost.org/sgi/stl/LessThanComparable.html">LessThan
 Comparable</a>.
 
 <h3><a id="type-requirements">Type requirements</a></h3>
@@ -552,19 +573,30 @@ The maximum value of <tt>size_type</tt>.
 <hr />
 <pre>
 <a id=
-"cons1">dynamic_bitset</a>(const Allocator&amp; alloc = Allocator())
+"cons0">dynamic_bitset</a>()
+</pre>
+
+<b>Effects:</b> Constructs a bitset of size zero. The allocator
+for this bitset is a default-constructed object of type
+<tt>Allocator</tt>.<br />
+ <b>Postconditions:</b> <tt>this-&gt;size() == 0</tt>.<br />
+ <b>Throws:</b> Nothing unless the default constructor of
+<tt>Allocator</tt> throws an exception.<br />
+ (Required by <a href=
+"https://boost.org/sgi/stl/DefaultConstructible.html">Default
+Constructible</a>.)
+
+<hr />
+<pre>
+<a id=
+"cons1">dynamic_bitset</a>(const Allocator&amp; alloc)
 </pre>
 
 <b>Effects:</b> Constructs a bitset of size zero. A copy of the
 <tt>alloc</tt> object will be used in subsequent bitset
 operations such as <tt>resize</tt> to allocate memory.<br />
  <b>Postconditions:</b> <tt>this-&gt;size() == 0</tt>.<br />
- <b>Throws:</b> An allocation error if memory is exhausted
-(<tt>std::bad_alloc</tt> if
-<tt>Allocator=std::allocator</tt>).<br />
- (Required by <a href=
-"http://www.sgi.com/tech/stl/DefaultConstructible.html">Default
-Constructible</a>.)
+ <b>Throws:</b> nothing.
 
 <hr />
 <pre>
@@ -619,7 +651,21 @@ allocator in <tt>x</tt>. <br />
 (<tt>std::bad_alloc</tt> if
 <tt>Allocator=std::allocator</tt>).<br />
  (Required by <a href=
-"http://www.sgi.com/tech/stl/Assignable.html">Assignable</a>.)
+"https://boost.org/sgi/stl/Assignable.html">Assignable</a>.)
+
+<hr />
+<pre>
+<a id="move-cons">dynamic_bitset</a>(dynamic_bitset&amp;&amp; x)
+</pre>
+
+<b>Effects:</b> Constructs a bitset that is the same as the bitset
+<tt>x</tt>, while using the resources from <tt>x</tt>. The allocator
+for this bitset is moved from the allocator in <tt>x</tt>. <br />
+ <b>Postconditions:</b> For all <tt>i</tt> in the range
+<tt>[0,x.size())</tt>, <tt>(*this)[i] == x[i]</tt>.<br />
+ <b>Throws:</b> An allocation error if memory is exhausted
+(<tt>std::bad_alloc</tt> if
+<tt>Allocator=std::allocator</tt>).
 
 <hr />
 <pre>
@@ -688,7 +734,7 @@ position <tt>(b * bits_per_block + i)</tt> in the bitset (where
 <br />
 <b>Requires:</b> <tt>BlockInputIterator</tt> must be either an
 integral type or a model of <a href=
-    "http://www.sgi.com/tech/stl/InputIterator.html">Input
+    "https://boost.org/sgi/stl/InputIterator.html">Input
     Iterator</a> whose <tt>value_type</tt> is the same type as
 <tt>Block</tt>.<br /> <b>Throws:</b> An allocation error if
 memory is exhausted (<tt>std::bad_alloc</tt> if
@@ -699,11 +745,11 @@ memory is exhausted (<tt>std::bad_alloc</tt> if
 template&lt;typename Char, typename Traits, typename Alloc&gt;
 explicit
 <a id="cons3">dynamic_bitset</a>(const <a href=
-"http://www.sgi.com/tech/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;&amp; s,
+"https://boost.org/sgi/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;&amp; s,
                typename std::basic_string&lt;CharT, Traits, Alloc&gt;::size_type pos = 0,
                typename std::basic_string&lt;CharT, Traits, Alloc&gt;::size_type n = <a
  href=
-"http://www.sgi.com/tech/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;::npos,
+"https://boost.org/sgi/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;::npos,
                const Allocator&amp; alloc = Allocator())
 </pre>
 
@@ -762,7 +808,21 @@ dynamic_bitset&amp; <a id=
  <b>Returns:</b> <tt>*this</tt>.<br />
  <b>Throws:</b> nothing. <br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/Assignable.html">Assignable</a>.)
+"https://boost.org/sgi/stl/Assignable.html">Assignable</a>.)
+
+<hr />
+<pre>
+dynamic_bitset&amp; <a id=
+"move-assign">operator=</a>(dynamic_bitset&amp;&amp; x)
+</pre>
+
+<b>Effects:</b> This bitset becomes the same as the bitset
+<tt>x</tt>, while using the resources from <tt>x</tt>.<br />
+ <b>Postconditions:</b> For all <tt>i</tt> in the range
+<tt>[0,x.size())</tt>, <tt>(*this)[i] == x[i]</tt>.<br />
+ <b>Returns:</b> <tt>*this</tt>.<br />
+ <b>Throws:</b> An allocation error if memory is exhausted
+(<tt>std::bad_alloc</tt> if <tt>Allocator=std::allocator</tt>).
 
 <hr />
 <pre>
@@ -795,6 +855,15 @@ void <a id="clear">clear</a>()
 </pre>
 
 <b>Effects:</b> The size of the bitset becomes zero.<br />
+ <b>Throws:</b> nothing.
+
+<hr />
+<pre>
+void <a id="pop_back">pop_back</a>();
+</pre>
+
+<b>Precondition:</b> <tt>!this-&gt;empty()</tt>.<br />
+<b>Effects:</b> Decreases the size of the bitset by one.<br />
  <b>Throws:</b> nothing.
 
 <hr />
@@ -842,7 +911,7 @@ for (; first != last; ++first)
 
 <b>Requires:</b> The <tt>BlockInputIterator</tt> type must be a
 model of <a href=
-"http://www.sgi.com/tech/stl/InputIterator.html">Input
+"https://boost.org/sgi/stl/InputIterator.html">Input
 Iterator</a> and the <tt>value_type</tt> must be the same type as
 <tt>Block</tt>.<br />
  <b>Throws:</b> An allocation error if memory is exhausted
@@ -1014,6 +1083,18 @@ dynamic_bitset&amp; <a id="reset1">reset</a>()
 <hr />
 <pre>
 dynamic_bitset&amp; <a id=
+"set3">set</a>(size_type n, size_type len, bool val);
+</pre>
+
+<b>Precondition:</b> <tt>n + len &lt; this-&gt;size()</tt>.<br />
+<b>Effects:</b> Sets every bit indexed from <tt>n</tt> to
+<tt>n + len - 1</tt> inclusively if <tt>val</tt> is <tt>true</tt>, and
+clears them if <tt>val</tt> is <tt>false</tt>. <br />
+<b>Returns:</b> <tt>*this</tt>
+
+<hr />
+<pre>
+dynamic_bitset&amp; <a id=
 "set2">set</a>(size_type n, bool val = true)
 </pre>
 
@@ -1025,11 +1106,32 @@ dynamic_bitset&amp; <a id=
 
 <hr />
 <pre>
+dynamic_bitset&amp; <a id=
+"reset3">reset</a>(size_type n, size_type len);
+</pre>
+
+<b>Precondition:</b> <tt>n + len &lt; this-&gt;size()</tt>.<br />
+<b>Effects:</b> Clears every bit indexed from <tt>n</tt> to
+<tt>n + len - 1</tt> inclusively.<br />
+<b>Returns:</b> <tt>*this</tt>
+
+<hr />
+<pre>
 dynamic_bitset&amp; <a id="reset2">reset</a>(size_type n)
 </pre>
 
 <b>Precondition:</b> <tt>n &lt; this-&gt;size()</tt>.<br />
 <b>Effects:</b> Clears bit <tt>n</tt>.<br />
+<b>Returns:</b> <tt>*this</tt>
+
+<hr />
+<pre>
+dynamic_bitset&amp; <a id="flip3">flip</a>(size_type n, size_type len)
+</pre>
+
+<b>Precondition:</b> <tt>n + len &lt; this-&gt;size()</tt>.<br />
+<b>Effects:</b> Flips every bit indexed from <tt>n</tt> to
+<tt>n + len - 1</tt> inclusively.<br />
 <b>Returns:</b> <tt>*this</tt>
 
 <hr />
@@ -1080,11 +1182,54 @@ different semantics.
 
 <hr />
 <pre>
+size_type <a id="capacity">capacity</a>() const;
+</pre>
+
+<b>Returns:</b>  The total number of elements that <tt>*this</tt> can hold without requiring
+reallocation.<br />
+<b>Throws:</b> nothing.
+
+<hr />
+<pre>
+void <a id="reserve">reserve</a>(size_type num_bits);
+</pre>
+
+<b>Effects:</b> A directive that informs the bitset of a planned change in size, so that it can
+manage the storage allocation accordingly. After reserve(), capacity() is greater or equal to the
+argument of reserve() if reallocation happens; and equal to the previous value of capacity() otherwise.
+Reallocation happens at this point if and only if the current capacity is less than the argument of
+reserve(). <br />
+<i>Note:</i> It does not change the size() of the bitset.<br />
+<b>Postcondtitions:</b> <tt>this->capacity() >= num_bits</tt>.<br />
+<b>Throws:</b> An allocation error if memory is exhausted
+(<tt>std::bad_alloc</tt> if <tt>Allocator=std::allocator</tt>).
+
+<hr />
+<pre>
+void <a id="shrink_to_fit">shrink_to_fit</a>();
+</pre>
+
+<b>Effects:</b> shrink_to_fit() is a request to reduce memory use by removing unused capacity.<br />
+<i>Note:</i> It does not change the size() of the bitset.<br />
+<b>Throws:</b> An allocation error if memory is exhausted
+(<tt>std::bad_alloc</tt> if <tt>Allocator=std::allocator</tt>).
+
+<hr />
+<pre>
 size_type <a id="count">count</a>() const
 </pre>
 
 <b>Returns:</b> the number of bits in this bitset that are
 set.<br />
+<b>Throws:</b> nothing.
+
+<hr />
+<pre>
+bool <a id="all">all</a>() const
+</pre>
+
+<b>Returns:</b> <tt>true</tt> if all bits in this bitset are set or
+if <tt>size() == 0</tt>, and otherwise returns <tt>false</tt>.<br />
 <b>Throws:</b> nothing.
 
 <hr />
@@ -1113,6 +1258,18 @@ bool <a id="test">test</a>(size_type n) const
 <b>Precondition:</b> <tt>n &lt; this-&gt;size()</tt>.<br />
  <b>Returns:</b> <tt>true</tt> if bit <tt>n</tt> is set and
 <tt>false</tt> is bit <tt>n</tt> is 0.
+
+<hr />
+<pre>
+bool <a id="test">test_set</a>(size_type n, bool val = true)
+</pre>
+
+<b>Precondition:</b> <tt>n &lt; this-&gt;size()</tt>.<br />
+ <b>Effects:</b> Sets bit <tt>n</tt> if <tt>val</tt> is
+<tt>true</tt>, and clears bit <tt>n</tt> if <tt>val</tt> is
+<tt>false</tt>. <br />
+ <b>Returns:</b> <tt>true</tt> if the previous state of bit
+<tt>n</tt> was set and <tt>false</tt> is bit <tt>n</tt> is 0.
 
 <hr />
 <pre>
@@ -1217,7 +1374,7 @@ rhs.size()</tt> and if for all <tt>i</tt> in the range
 returns <tt>false</tt>.<br />
  <b>Throws:</b> nothing.<br />
  (Required by <a href=
-"http://www.sgi.com/tech/stl/EqualityComparable.html">Equality
+"https://boost.org/sgi/stl/EqualityComparable.html">Equality
 Comparable</a>.)
 
 <hr />
@@ -1229,7 +1386,7 @@ bool <a id=
 <b>Returns:</b> <tt>!((*this) == rhs)</tt><br />
 <b>Throws:</b> nothing.<br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/EqualityComparable.html">Equality
+"https://boost.org/sgi/stl/EqualityComparable.html">Equality
 Comparable</a>.)
 
 <hr />
@@ -1241,11 +1398,11 @@ bool <a id=
 <b>Returns:</b> <tt>true</tt> if this bitset is lexicographically
 less than <tt>rhs</tt>, and returns <tt>false</tt> otherwise.
 (See the description of <a href=
-"http://www.sgi.com/tech/stl/lexicographical_compare.html">lexicographical_compare</a>
+"https://boost.org/sgi/stl/lexicographical_compare.html">lexicographical_compare</a>
 for a definition of lexicographic ordering). <br />
 <b>Throws:</b> nothing.<br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/LessThanComparable.html">Less Than
+"https://boost.org/sgi/stl/LessThanComparable.html">Less Than
 Comparable</a>.)
 
 <hr />
@@ -1258,7 +1415,7 @@ bool <a id=
 rhs)</tt><br />
 <b>Throws:</b> nothing.<br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/LessThanComparable.html">Less Than
+"https://boost.org/sgi/stl/LessThanComparable.html">Less Than
 Comparable</a>.)
 
 <hr />
@@ -1270,7 +1427,7 @@ bool <a id=
 <b>Returns:</b> <tt>(*this) &lt; rhs || (*this) == rhs</tt><br />
 <b>Throws:</b> nothing.<br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/LessThanComparable.html">Less Than
+"https://boost.org/sgi/stl/LessThanComparable.html">Less Than
 Comparable</a>.)
 
 <hr />
@@ -1282,7 +1439,7 @@ bool <a id=
 <b>Returns:</b> <tt>(*this) &gt; rhs || (*this) == rhs</tt><br />
 <b>Throws:</b> nothing.<br />
 (Required by <a href=
-"http://www.sgi.com/tech/stl/LessThanComparable.html">Less Than
+"https://boost.org/sgi/stl/LessThanComparable.html">Less Than
 Comparable</a>.)
 
 <hr />
@@ -1342,7 +1499,7 @@ template &lt;typename CharT, typename Alloc&gt;
 void <a id=
 "to_string">to_string</a>(const dynamic_bitset&lt;Block, Allocator&gt;&amp; b,
                <a href=
-"http://www.sgi.com/tech/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;&amp; s)
+"https://boost.org/sgi/stl/basic_string.html">std::basic_string</a>&lt;Char,Traits,Alloc&gt;&amp; s)
 </pre>
 
 <b>Effects:</b> Copies a representation of <tt>b</tt> into the
@@ -1380,7 +1537,7 @@ block <tt>bval</tt> written, the bit <tt>(bval &gt;&gt; i) &amp;
 + i)</tt> in the bitset.<br />
  <b>Requires:</b> The type <tt>BlockOutputIterator</tt> must be a
 model of <a href=
-"http://www.sgi.com/tech/stl/OutputIterator.html">Output
+"https://boost.org/sgi/stl/OutputIterator.html">Output
 Iterator</a> and its <tt>value_type</tt> must be the same type as
 <tt>Block</tt>. Further, the size of the output range must be
 greater or equal <tt>b.num_blocks()</tt>.
@@ -1396,7 +1553,7 @@ void <a id=
 <b>Effects:</b> Reads blocks from the iterator range into the
 bitset. <br />
  <b>Requires:</b> The type <tt>BlockIterator</tt> must be a model
-of <a href="http://www.sgi.com/tech/stl/InputIterator.html">Input
+of <a href="https://boost.org/sgi/stl/InputIterator.html">Input
 Iterator</a> and its <tt>value_type</tt> must be the same type as
 <tt>Block</tt>. The size of the iterator range must be less or
 equal to <tt>b.num_blocks()</tt>.
@@ -1509,6 +1666,14 @@ exception guarantee.
 <hr />
 <h3><a id="changes-from-previous-ver">Changes from previous version(s)</a></h3>
 
+<h4><i>Changes in Boost 1.56.0</i></h4>
+<ul>
+<li>Support for C++11 move constructors.</li>
+<li>Warning fixes on MSVC 2013.</li>
+<li>Support for C++11 minimal allocators.</li>
+<li>Add noexcept specifications.</li>
+</ul>
+
 <h4><i>Changes in Boost 1.37.0</i></h4>
 <ul>
 <li>The constructor from a block range implements a "do the right thing"
@@ -1561,17 +1726,20 @@ applied to their corresponding <tt>dynamic_bitset</tt>s.
 </li>
 </ul>
 <i>General improvements</i>
-<br /><br />
+<ul>
+<li>
 Several optimizations to member and non-member functions and to the
 nested class <tt>reference</tt>.
+</li>
+</ul>
 
 <hr />
 <h3><a id="see-also">See also</a></h3>
 
 <tt><a href=
-"http://www.sgi.com/tech/stl/bitset.html">std::bitset</a></tt>,
+"https://boost.org/sgi/stl/bitset.html">std::bitset</a></tt>,
 <tt><a href=
-"http://www.sgi.com/tech/stl/Vector.html">std::vector</a></tt>,
+"https://boost.org/sgi/stl/Vector.html">std::vector</a></tt>,
 
 <h3><a id="acknowledgements">Acknowledgements</a></h3>
 
@@ -1594,6 +1762,18 @@ href="mailto:cda@freshsources.com">cda@freshsources.com</a>)<br
 <td>Copyright &copy; 2003-2004, 2008</td> <td><a
         href="http://gennaro-prota.50webs.com/">Gennaro Prota</a>
     (name.surname yahoo.com)</td>
+</tr>
+<tr>
+<td>Copyright &copy; 2014</td>
+<td>Ahmed Charles (<a href="mailto:acharles@outlook.com">acharles@outlook.com</a>)</td>
+</tr>
+<tr>
+<td>Copyright &copy; 2014</td>
+<td>Glen Fernandes (<a href="mailto:glenjofe@gmail.com">glenjofe@gmail.com</a>)</td>
+</tr>
+<tr>
+<td>Copyright &copy; 2014</td>
+<td>Riccardo Marcangelo (<a href="mailto:ricky.65@outlook.com">ricky.65@outlook.com</a>)</td>
 </tr>
 </table>
 <br />

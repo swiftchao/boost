@@ -24,6 +24,7 @@
 
 namespace boost { namespace mpl {
 
+#if !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
 
 template<
       bool C
@@ -45,7 +46,7 @@ struct if_c<false,T1,T2>
 };
 
 // agurt, 05/sep/04: nondescriptive parameter names for the sake of DigitalMars
-// (and possibly MWCW < 8.0); see http://article.gmane.org/gmane.comp.lib.boost.devel/108959
+// (and possibly MWCW < 8.0); see https://lists.boost.org/Archives/boost/2004/09/71383.php
 template<
       typename BOOST_MPL_AUX_NA_PARAM(T1)
     , typename BOOST_MPL_AUX_NA_PARAM(T2)
@@ -71,6 +72,61 @@ struct if_
     BOOST_MPL_AUX_LAMBDA_SUPPORT(3,if_,(T1,T2,T3))
 };
 
+#else
+
+// no partial class template specialization
+
+namespace aux {
+
+template< bool C >
+struct if_impl
+{
+    template< typename T1, typename T2 > struct result_
+    {
+        typedef T1 type;
+    };
+};
+
+template<>
+struct if_impl<false>
+{
+    template< typename T1, typename T2 > struct result_
+    { 
+        typedef T2 type;
+    };
+};
+
+} // namespace aux
+
+template<
+      bool C_
+    , typename T1
+    , typename T2
+    >
+struct if_c
+{
+    typedef typename aux::if_impl< C_ >
+        ::template result_<T1,T2>::type type;
+};
+
+// (almost) copy & paste in order to save one more 
+// recursively nested template instantiation to user
+template<
+      typename BOOST_MPL_AUX_NA_PARAM(C_)
+    , typename BOOST_MPL_AUX_NA_PARAM(T1)
+    , typename BOOST_MPL_AUX_NA_PARAM(T2)
+    >
+struct if_
+{
+    enum { msvc_wknd_ = BOOST_MPL_AUX_MSVC_VALUE_WKND(C_)::value };
+
+    typedef typename aux::if_impl< BOOST_MPL_AUX_STATIC_CAST(bool, msvc_wknd_) >
+        ::template result_<T1,T2>::type type;
+
+    BOOST_MPL_AUX_LAMBDA_SUPPORT(3,if_,(C_,T1,T2))
+};
+
+#endif // BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION
 
 BOOST_MPL_AUX_NA_SPEC(3, if_)
 

@@ -6,6 +6,10 @@
 #ifndef TT_HAS_POSTFIX_OPERATORS_HPP
 #define TT_HAS_POSTFIX_OPERATORS_HPP
 
+// It would be nice to get rid of the unnamed namespace here,
+// but for now we just turn off inspection reporting :(
+// boostinspect:nounnamed
+
 // test with one template parameter
 #define TEST_T(TYPE,RESULT) BOOST_CHECK_INTEGRAL_CONSTANT((::boost::BOOST_TT_TRAIT_NAME<TYPE>::value), RESULT)
 // test with one template parameter plus return value
@@ -20,7 +24,7 @@ struct ret { };
 struct internal { ret operator BOOST_TT_TRAIT_OP (int) const; };
 
 struct external { };
-ret operator BOOST_TT_TRAIT_OP (const external&, int);
+inline ret operator BOOST_TT_TRAIT_OP (const external&, int){ return ret(); }
 
 struct comma1_ret { };
 struct ret_with_comma1 { comma1_ret operator,(int); };
@@ -28,14 +32,14 @@ struct ret_with_comma1 { comma1_ret operator,(int); };
 struct internal_comma1 { ret_with_comma1 operator BOOST_TT_TRAIT_OP (int) const; };
 
 struct external_comma1 { };
-ret_with_comma1 operator BOOST_TT_TRAIT_OP (const external_comma1&, int);
+inline ret_with_comma1 operator BOOST_TT_TRAIT_OP (const external_comma1&, int){ return ret_with_comma1(); }
 
 struct ret_with_comma2 { void operator,(int); };
 
 struct internal_comma2 { ret_with_comma2 operator BOOST_TT_TRAIT_OP (int) const; };
 
 struct external_comma2 { };
-ret_with_comma2 operator BOOST_TT_TRAIT_OP (const external_comma2&, int);
+inline ret_with_comma2 operator BOOST_TT_TRAIT_OP (const external_comma2&, int){ return ret_with_comma2(); }
 
 struct returns_int { int operator BOOST_TT_TRAIT_OP (int); };
 
@@ -56,14 +60,14 @@ struct returns_convertible_to_ret2 { convertible_to_ret2 operator BOOST_TT_TRAIT
 class Base1 { };
 class Derived1 : public Base1 { };
 
-bool operator BOOST_TT_TRAIT_OP (const Base1&, int) { return true; }
+inline bool operator BOOST_TT_TRAIT_OP (const Base1&, int) { return true; }
 
 class Base2 { };
 struct Derived2 : public Base2 {
    Derived2(int); // to check if it works with a class that is not default constructible
 };
 
-bool operator BOOST_TT_TRAIT_OP (const Derived2&, int) { return true; }
+inline bool operator BOOST_TT_TRAIT_OP (const Derived2&, int) { return true; }
 
 struct tag { };
 
@@ -129,3 +133,4 @@ void common() {
 }
 
 #endif
+

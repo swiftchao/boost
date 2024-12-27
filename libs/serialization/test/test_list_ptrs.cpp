@@ -26,18 +26,13 @@ namespace std{
 #include <boost/archive/archive_exception.hpp>
 #include "test_tools.hpp"
 
-#include <boost/serialization/list.hpp>
-#ifdef BOOST_HAS_SLIST
-#include <boost/serialization/slist.hpp>
-#endif
 #include <boost/serialization/nvp.hpp>
 
 #include "A.hpp"
 #include "A.ipp"
 
 template<class T>
-struct ptr_equal_to : public std::binary_function<T, T, bool> 
-{
+struct ptr_equal_to {
     BOOST_STATIC_ASSERT(::boost::is_pointer< T >::value);
     bool operator()(T const _Left, T const _Right) const
     {
@@ -49,8 +44,8 @@ struct ptr_equal_to : public std::binary_function<T, T, bool>
     }
 };
 
-int test_main( int /* argc */, char* /* argv */[] )
-{
+#include <boost/serialization/list.hpp>
+void test_list(){
     const char * testfile = boost::archive::tmpnam(NULL);
     BOOST_REQUIRE(NULL != testfile);
 
@@ -91,39 +86,12 @@ int test_main( int /* argc */, char* /* argv */[] )
         alist1.end(), 
         boost::checked_deleter<A>()
     );
-    
-    #ifdef BOOST_HAS_SLIST
-    std::list<A *> aslist;
-    {   
-        aslist.push_back(new A);
-        aslist.push_back(new A);
-        test_ostream os(testfile, TEST_STREAM_FLAGS);
-        test_oarchive oa(os, TEST_ARCHIVE_FLAGS);
-        aslist.push_back(new A);
-        aslist.push_back(new A);
-        oa << boost::serialization::make_nvp("aslist", aslist);
-    }
-    std::list<A *> aslist1;
-    {
-        test_istream is(testfile, TEST_STREAM_FLAGS);
-        test_iarchive ia(is, TEST_ARCHIVE_FLAGS);
-        ia >> boost::serialization::make_nvp("aslist", aslist1);
-        BOOST_CHECK(aslist.size() == aslist1.size() &&
-            std::equal(aslist.begin(),aslist.end(),aslist1.begin(),ptr_equal_to<A *>())
-        );
-    }
-    std::for_each(
-        aslist.begin(), 
-        aslist.end(), 
-        boost::checked_deleter<A>()
-    );
-    std::for_each(
-        aslist1.begin(), 
-        aslist1.end(), 
-        boost::checked_deleter<A>()
-    );  
-    #endif
     std::remove(testfile);
+}
+
+int test_main( int /* argc */, char* /* argv */[] )
+{
+    test_list();
     return EXIT_SUCCESS;
 }
 

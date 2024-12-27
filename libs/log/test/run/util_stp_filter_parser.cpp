@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2013.
+ *          Copyright Andrey Semashev 2007 - 2015.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -142,10 +142,10 @@ BOOST_AUTO_TEST_CASE(int_relation)
 // Tests for floating point relation filter
 BOOST_AUTO_TEST_CASE(fp_relation)
 {
-    attrs::constant< float > attr1(2.5);
-    attrs::constant< float > attr2(8.8);
+    attrs::constant< float > attr1(2.5f);
+    attrs::constant< float > attr2(8.8f);
     attrs::constant< double > attr3(-9.1);
-    attrs::constant< float > attr4(0);
+    attrs::constant< float > attr4(0.0f);
     attr_set set1, set2, set3;
 
     attr_values values1(set1, set2, set3);
@@ -570,9 +570,11 @@ BOOST_AUTO_TEST_CASE(contains_relation)
 BOOST_AUTO_TEST_CASE(matches_relation)
 {
     attrs::constant< std::string > attr1("hello");
+    attrs::constant< std::string > attr2("127.0.0.1");
     attr_set set1, set2, set3;
 
     set1["MyStr"] = attr1;
+    set1["MyIP"] = attr2;
     attr_values values1(set1, set2, set3);
     values1.freeze();
 
@@ -583,6 +585,18 @@ BOOST_AUTO_TEST_CASE(matches_relation)
     {
         logging::filter f = logging::parse_filter("%MyStr% matches \"w.*\"");
         BOOST_CHECK(!f(values1));
+    }
+    {
+        logging::filter f = logging::parse_filter("%MyStr% matches \"\\\\d*\"");
+        BOOST_CHECK(!f(values1));
+    }
+    {
+        logging::filter f = logging::parse_filter("%MyStr% matches \"[a-z]*\"");
+        BOOST_CHECK(f(values1));
+    }
+    {
+        logging::filter f = logging::parse_filter("%MyIP% matches \"\\\\d*\\\\.\\\\d*\\\\.\\\\d*\\\\.\\\\d*\"");
+        BOOST_CHECK(f(values1));
     }
 }
 

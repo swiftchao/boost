@@ -1,10 +1,15 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 // Unit Test
 
-// Copyright (c) 2007-2013 Barend Gehrels, Amsterdam, the Netherlands.
-// Copyright (c) 2008-2013 Bruno Lalande, Paris, France.
-// Copyright (c) 2009-2013 Mateusz Loskot, London, UK.
-// Copyright (c) 2013 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2007-2015 Barend Gehrels, Amsterdam, the Netherlands.
+// Copyright (c) 2008-2015 Bruno Lalande, Paris, France.
+// Copyright (c) 2009-2015 Mateusz Loskot, London, UK.
+// Copyright (c) 2013-2017 Adam Wulkiewicz, Lodz, Poland.
+
+// This file was modified by Oracle on 2014, 2015.
+// Modifications copyright (c) 2014-2015 Oracle and/or its affiliates.
+
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
@@ -34,15 +39,11 @@
 
 // Include from unit tests
 #include <algorithms/test_overlay.hpp>
-#include <algorithms/test_relate.hpp>
+#include <algorithms/predef_relop.hpp>
 #include <algorithms/overlay/overlay_cases.hpp>
 
 #if defined(BOOST_GEOMETRY_UNIT_TEST_MULTI)
-#  include <boost/geometry/multi/algorithms/correct.hpp>
-#  include <boost/geometry/multi/algorithms/within.hpp>
-#  include <boost/geometry/multi/algorithms/detail/extreme_points.hpp>
-#  include <boost/geometry/multi/geometries/multi_polygon.hpp>
-#  include <boost/geometry/multi/io/wkt/wkt.hpp>
+#  include <boost/geometry/algorithms/detail/extreme_points.hpp>
 #endif
 
 
@@ -51,19 +52,15 @@
 #endif
 
 template <typename Geometry>
-void test_geometry(std::string const& case_id, std::string const& wkt, double expected_x, double expected_y)
+void test_geometry(std::string const& case_id, Geometry const& geometry, double /*expected_x*/ = 0, double /*expected_y*/ = 0)
 {
 //std::cout << case_id << std::endl;
     typedef typename bg::point_type<Geometry>::type point_type;
 
-    Geometry geometry;
-    bg::read_wkt(wkt, geometry);
-    bg::correct(geometry);
-
     point_type point;
     bg::point_on_surface(geometry, point);
 
-    BOOST_CHECK_MESSAGE(bg::within(point, geometry), 
+    BOOST_CHECK_MESSAGE(bg::within(point, geometry),
         case_id << " generated point_on_surface (dim 1) is not within geometry");
 
 #ifdef BOOST_GEOMETRY_POINT_ON_SURFACE_COMPLETE
@@ -71,7 +68,7 @@ void test_geometry(std::string const& case_id, std::string const& wkt, double ex
     point_type right_point;
     bg::detail::point_on_surface::calculate_point_on_surface<0>(geometry, right_point);
 
-    BOOST_CHECK_MESSAGE(bg::within(right_point, geometry), 
+    BOOST_CHECK_MESSAGE(bg::within(right_point, geometry),
         case_id << " generated point_on_surface (dim 0) is not within geometry");
 
     point_type returned_point = bg::return_point_on_surface(geometry);
@@ -125,11 +122,39 @@ void test_geometry(std::string const& case_id, std::string const& wkt, double ex
 
 }
 
+template <typename Geometry>
+void test_geometry(std::string const& case_id, std::string const& wkt, double expected_x = 0, double expected_y = 0)
+{
+    Geometry geometry;
+    bg::read_wkt(wkt, geometry);
+    bg::correct(geometry);
+    test_geometry(case_id, geometry, expected_x, expected_y);
+}
+
+template <typename Point>
+void test_point_order_and_type()
+{
+    typedef bg::model::polygon<Point, false, false> ccw_open_polygon;
+    typedef bg::model::polygon<Point,  true, false> cw_open_polygon;
+    typedef bg::model::polygon<Point, false,  true> ccw_closed_polygon;
+    typedef bg::model::polygon<Point,  true,  true> cw_closed_polygon;
+
+    test_geometry<ccw_open_polygon>("with_hole_ccw_open", "POLYGON((0 0,9 0,9 9,0 9),(2 2,2 7,7 7,7 2))", 0, 0);
+    test_geometry<cw_open_polygon>("with_hole_cw_open", "POLYGON((0 0,0 9,9 9,9 0),(2 2,7 2,7 7,2 7))", 0, 0);
+    test_geometry<ccw_closed_polygon>("with_hole_ccw_closed", "POLYGON((0 0,9 0,9 9,0 9,0 0),(2 2,2 7,7 7,7 2,2 2))", 0, 0);
+    test_geometry<cw_closed_polygon>("with_hole_cw_closed", "POLYGON((0 0,0 9,9 9,9 0,0 0),(2 2,7 2,7 7,2 7,2 2))", 0, 0);
+
+    test_geometry<cw_closed_polygon>("t1", "POLYGON((0 0,0 10,10 0,0 0))", 0, 0);
+    test_geometry<cw_closed_polygon>("t2", "POLYGON((0 0,10 0,0 -10,0 0))", 0, 0);
+    test_geometry<cw_closed_polygon>("t3", "POLYGON((0 0,0 -10,-10 0,0 0))", 0, 0);
+    test_geometry<cw_closed_polygon>("t4", "POLYGON((0 0,-10 0,0 10,0 0))", 0, 0);
+}
+
 template <typename Point>
 void test_all()
 {
     typedef bg::model::polygon<Point> polygon;
- 
+
     // Specific test-cases for point-on-surface:
     test_geometry<polygon>("ice", "polygon((5 0,0 5,1 6,2 5,4 8,6 5,7 6,8 5,9 6,10 5,5 0))", 0, 0);
     test_geometry<polygon>("intruding", "polygon((5 0,0 5,1 6,2 5,4 8,6 5,7 6,8 5,9 6,10 5,7 2,4 7,6 1,5 0))", 0, 0);
@@ -152,24 +177,27 @@ void test_all()
     test_geometry<polygon>("disjoint_simplex0", disjoint_simplex[0], 0, 0);
     test_geometry<polygon>("disjoint_simplex1", disjoint_simplex[1], 0, 0);
 
+    test_geometry<polygon>("ticket_10643", "POLYGON((1074699.93 703064.65, 1074703.90 703064.58, 1074704.53 703061.40, 1074702.10 703054.62, 1074699.93 703064.65))");
+    test_geometry<polygon>("ticket_10643_2", "POLYGON((699.93 64.65, 703.90 64.58, 704.53 61.40, 702.10 54.62, 699.93 64.65))");
+
 #if defined(BOOST_GEOMETRY_UNIT_TEST_MULTI)
     {
         typedef bg::model::multi_polygon<polygon> multi_polygon;
         test_geometry<multi_polygon>("mp_simplex", "multipolygon(((0 0,0 5,5 0, 0 0)),((7 1,7 6,10 1,7 1)))", 0, 0);
         // Wrapped polygon in two orders
-        test_geometry<multi_polygon>("mp_wrapped1", 
+        test_geometry<multi_polygon>("mp_wrapped1",
                 "multipolygon("
                 "((4 10,9 11,10 16,11 11,16 10,11 9,10 4,9 9,4 10))"
                 ","
                 "((0 10,10 20,20 10,10 0,0 10),(10 2,18 10,10 18,2 10,10 2))"
-                ")", 
+                ")",
                 0, 0);
-        test_geometry<multi_polygon>("mp_wrapped2", 
+        test_geometry<multi_polygon>("mp_wrapped2",
                 "multipolygon("
                 "((0 10,10 20,20 10,10 0,0 10),(10 2,18 10,10 18,2 10,10 2))"
                 ","
                 "((4 10,9 11,10 16,11 11,16 10,11 9,10 4,9 9,4 10))"
-                ")", 
+                ")",
                 0, 0);
     }
 #endif
@@ -265,7 +293,7 @@ void test_all()
     test_geometry<polygon>("dz_2", dz_2[0],  0, 0);
     test_geometry<polygon>("dz_3", dz_3[0],  0, 0);
     test_geometry<polygon>("dz_4", dz_4[0],  0, 0);
-    test_geometry<polygon>("geos_1_test_overlay", geos_1_test_overlay[0],  0, 0);
+    test_geometry<polygon>("geos_1", geos_1[0],  0, 0);
     test_geometry<polygon>("geos_2", geos_2[0],  0, 0);
     test_geometry<polygon>("geos_3", geos_3[0],  0, 0);
     test_geometry<polygon>("geos_4", geos_4[0],  0, 0);
@@ -303,11 +331,34 @@ void test_all()
     test_geometry<polygon>("ticket_8254", ticket_8254[0],  0, 0);
 }
 
+template <typename Point>
+void test_dense(std::string const& case_id, double size)
+{
+    typedef bg::model::polygon<Point> polygon;
+    polygon poly;
+    
+    bg::append(poly, Point(-size, 0));
+    
+    double thres = 3.14158 / 8;
+    for ( double a = thres ; a > -thres ; a -= 0.01 )
+    {
+        bg::append(poly, Point(size * ::cos(a), size * ::sin(a)));
+    }
+
+    bg::append(poly, Point(-size, 0));
+
+    test_geometry(case_id, poly);
+}
 
 
 int test_main(int, char* [])
 {
     test_all<bg::model::d2::point_xy<double> >();
+    test_point_order_and_type<bg::model::d2::point_xy<double> >();
+    test_point_order_and_type<bg::model::d2::point_xy<int> >();
+
+    test_dense<bg::model::d2::point_xy<double> >("dense1", 100);
+    test_dense<bg::model::d2::point_xy<double> >("dense2", 1000000);
 
     return 0;
 }

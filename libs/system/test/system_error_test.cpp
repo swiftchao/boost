@@ -1,16 +1,13 @@
 //  system_error_test.cpp  ---------------------------------------------------//
 
 //  Copyright Beman Dawes 2006
-
+//  Copyright (c) Microsoft Corporation 2014
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 //  See library home page at http://www.boost.org/libs/system
 
 //----------------------------------------------------------------------------// 
-
-//  test without deprecated features
-#define BOOST_SYSTEM_NO_DEPRECATED
 
 #include <boost/config/warning_disable.hpp>
 
@@ -40,7 +37,7 @@ namespace
     BOOST_TEST( ex.code().category() == system_category() );
 # ifdef BOOST_WINDOWS_API
     LANGID language_id;
-#   if !defined(__MINGW32__) && !defined(__CYGWIN__)
+#   if !BOOST_PLAT_WINDOWS_RUNTIME
       language_id = ::GetUserDefaultUILanguage();
 #   else
       language_id = 0x0409; // Assume US English

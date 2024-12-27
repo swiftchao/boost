@@ -1,15 +1,21 @@
 
-#line 424 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
 #include <boost/parameter/keyword.hpp>
-#line 413 "/home/daniel/dev/boost/trunk/libs/parameter/doc/index.rst"
-namespace graphs
-{
-  namespace tag { struct graph; } // keyword tag type
 
-  namespace // unnamed
-  {
-    // A reference to the keyword object
-    boost::parameter::keyword<tag::graph>& _graph
-    = boost::parameter::keyword<tag::graph>::get();
-  }
+namespace graphs {
+    namespace tag {
+
+        // keyword tag type
+        struct graph
+        {
+            typedef boost::parameter::forward_reference qualifier;
+        };
+    }
+
+    namespace // unnamed
+    {
+        // A reference to the keyword object
+        boost::parameter::keyword<tag::graph> const& _graph
+            = boost::parameter::keyword<tag::graph>::instance;
+    }
 }
+

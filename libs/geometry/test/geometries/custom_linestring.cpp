@@ -56,7 +56,7 @@ namespace boost { namespace geometry { namespace traits {
 // by specializing the "use_std" traits to false.
 // It should therefore implement the traits:: clear / append_point
 template <typename P>
-struct custom_linestring2 : std::deque<P> // std::pair<typename std::vector<P>::const_iterator, typename std::vector<P>::const_iterator> 
+struct custom_linestring2 : std::deque<P> // std::pair<typename std::vector<P>::const_iterator, typename std::vector<P>::const_iterator>
 {
 };
 
@@ -80,8 +80,8 @@ namespace boost { namespace geometry { namespace traits {
 template <typename G>
 void test_linestring()
 {
-    BOOST_CONCEPT_ASSERT( (bg::concept::Linestring<G>) );
-    BOOST_CONCEPT_ASSERT( (bg::concept::ConstLinestring<G>) );
+    BOOST_CONCEPT_ASSERT( (bg::concepts::Linestring<G>) );
+    BOOST_CONCEPT_ASSERT( (bg::concepts::ConstLinestring<G>) );
 
     G geometry;
     typedef typename bg::point_type<G>::type P;

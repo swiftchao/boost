@@ -8,15 +8,13 @@
 #define TT_TEST_HPP
 
 #include <boost/config.hpp>
+#include <boost/detail/workaround.hpp>
 
 #if defined(_WIN32_WCE) && defined(BOOST_MSVC)
 #pragma warning(disable:4201)
 #endif
 
-#ifdef USE_UNIT_TEST
-#  include <boost/test/unit_test.hpp>
-#endif
-#include <boost/utility.hpp>
+#include <boost/noncopyable.hpp>
 #include <iostream>
 #include <typeinfo>
 
@@ -62,35 +60,6 @@
 
 #endif
 
-#ifdef USE_UNIT_TEST
-//
-// global unit, this is not safe, but until the unit test framework uses
-// shared_ptr throughout this is about as good as it gets :-(
-//
-boost::unit_test::test_suite* get_master_unit(const char* name = 0);
-
-//
-// initialisation class:
-//
-class unit_initialiser
-{
-public:
-   unit_initialiser(void (*f)(), const char* /*name*/)
-   {
-      get_master_unit("Type Traits")->add( BOOST_TEST_CASE(f) );
-   }
-};
-
-#define TT_TEST_BEGIN(trait_name)\
-   namespace{\
-   void trait_name();\
-   unit_initialiser init(trait_name, BOOST_STRINGIZE(trait_name));\
-   void trait_name(){
-
-#define TT_TEST_END }}
-
-#else
-
 //
 // replacements for Unit test macros:
 //
@@ -128,9 +97,34 @@ int error_count = 0;
    int main(){
 #define TT_TEST_END return error_count; }
 
+#if !defined(BOOST_NO_CXX11_TEMPLATE_ALIASES) && !BOOST_WORKAROUND(BOOST_GCC, < 40704)
+
+#define TRANSFORM_CHECK_ALIASES(name, from_suffix, to_suffix)\
+   BOOST_CHECK_TYPE(bool to_suffix, name##_t<bool from_suffix>);\
+   BOOST_CHECK_TYPE(char to_suffix, name##_t<char from_suffix>);\
+   BOOST_CHECK_TYPE(wchar_t to_suffix, name##_t<wchar_t from_suffix>);\
+   BOOST_CHECK_TYPE(signed char to_suffix, name##_t<signed char from_suffix>);\
+   BOOST_CHECK_TYPE(unsigned char to_suffix, name##_t<unsigned char from_suffix>);\
+   BOOST_CHECK_TYPE(short to_suffix, name##_t<short from_suffix>);\
+   BOOST_CHECK_TYPE(unsigned short to_suffix, name##_t<unsigned short from_suffix>);\
+   BOOST_CHECK_TYPE(int to_suffix, name##_t<int from_suffix>);\
+   BOOST_CHECK_TYPE(unsigned int to_suffix, name##_t<unsigned int from_suffix>);\
+   BOOST_CHECK_TYPE(long to_suffix, name##_t<long from_suffix>);\
+   BOOST_CHECK_TYPE(unsigned long to_suffix, name##_t<unsigned long from_suffix>);\
+   BOOST_CHECK_TYPE(float to_suffix, name##_t<float from_suffix>);\
+   BOOST_CHECK_TYPE(long double to_suffix, name##_t<long double from_suffix>);\
+   BOOST_CHECK_TYPE(double to_suffix, name##_t<double from_suffix>);\
+   BOOST_CHECK_TYPE(UDT to_suffix, name##_t<UDT from_suffix>);\
+   BOOST_CHECK_TYPE(enum1 to_suffix, name##_t<enum1 from_suffix>);
+
+#else
+
+#define TRANSFORM_CHECK_ALIASES(name, from_suffix, to_suffix) /**/
+
 #endif
 
 #define TRANSFORM_CHECK(name, from_suffix, to_suffix)\
+   TRANSFORM_CHECK_ALIASES(name, from_suffix, to_suffix)\
    BOOST_CHECK_TYPE(bool to_suffix, name<bool from_suffix>::type);\
    BOOST_CHECK_TYPE(char to_suffix, name<char from_suffix>::type);\
    BOOST_CHECK_TYPE(wchar_t to_suffix, name<wchar_t from_suffix>::type);\
@@ -183,6 +177,11 @@ struct UDT
    int f2();
    int f3(int);
    int f4(int, float);
+#if __cpp_noexcept_function_type
+   void f5()noexcept;
+   int f6(int)noexcept(true);
+   double f7()noexcept(false);
+#endif
 };
 
 typedef void(*f1)();
@@ -194,6 +193,12 @@ typedef int (UDT::*mf3)(int);
 typedef int (UDT::*mf4)(int, float);
 typedef int (UDT::*mp);
 typedef int (UDT::*cmf)(int) const;
+#if __cpp_noexcept_function_type
+typedef void (UDT::*mf5)()noexcept;
+typedef int (UDT::*mf6)(int)noexcept;
+typedef double (UDT::*mf7)()noexcept;
+#endif
+typedef int (UDT::*mf8)(...);
 
 // cv-qualifiers applied to reference types should have no effect
 // declare these here for later use with is_reference and remove_reference:
@@ -203,6 +208,9 @@ typedef int (UDT::*cmf)(int) const;
 # elif defined(BOOST_INTEL)
 #  pragma warning(push)
 #  pragma warning(disable: 21)
+# elif defined(BOOST_CLANG)
+#  pragma clang diagnostic push
+#  pragma clang diagnostic ignored "-Wignored-qualifiers"
 # endif
 //
 // This is intentional:
@@ -223,6 +231,8 @@ typedef r_type cr_type;
 # elif defined(BOOST_INTEL)
 #  pragma warning(pop)
 #  pragma warning(disable: 985) // identifier truncated in debug information
+# elif defined(BOOST_CLANG)
+#  pragma clang diagnostic pop
 # endif
 
 struct POD_UDT { int x; };
@@ -317,6 +327,12 @@ enum enum2
    three_,four_
 };
 
+#ifndef BOOST_NO_CXX11_SCOPED_ENUMS
+
+enum class scoped_enum { one, two, three };
+
+#endif
+
 struct VB
 {
    virtual ~VB(){};
@@ -397,6 +413,14 @@ struct polymorphic_derived2 : public polymorphic_base
 {
    virtual void method();
 };
+
+#ifndef BOOST_NO_CXX11_FINAL
+struct final_UDT final
+{};
+struct polymorphic_derived_final final : public polymorphic_derived2
+{};
+#endif
+
 
 struct virtual_inherit1 : public virtual Base { };
 struct virtual_inherit2 : public virtual_inherit1 { };

@@ -5,6 +5,10 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
+// This file was modified by Oracle on 2017.
+// Modifications copyright (c) 2017, Oracle and/or its affiliates.
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -24,6 +28,7 @@
 #include <boost/geometry/algorithms/intersects.hpp>
 //#include <boost/geometry/algorithms/detail/overlay/self_intersection_points.hpp>
 #include <boost/geometry/algorithms/detail/overlay/self_turn_points.hpp>
+#include <boost/geometry/policies/robustness/get_rescale_policy.hpp>
 
 #include <boost/geometry/geometries/point_xy.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
@@ -43,25 +48,30 @@
 
 template <typename Geometry>
 static void test_self_intersection_points(std::string const& case_id,
-            int expected_count,
+            std::size_t expected_count,
             Geometry const& geometry,
             bool check_has_intersections,
-            double precision = 0.001)
+            double /*precision*/ = 0.001)
 {
-    typedef bg::detail::overlay::turn_info
-    <
-        typename bg::point_type<Geometry>::type
-    > turn_info;
+    typedef typename bg::point_type<Geometry>::type point_type;
+    //typedef typename bg::rescale_policy_type<point_type>::type rescale_policy_type;
+    typedef typename bg::strategy::intersection::services::default_strategy
+        <
+            typename bg::cs_tag<Geometry>::type
+        >::type strategy_type;
+    typedef bg::detail::no_rescale_policy rescale_policy_type;
+    typedef bg::detail::overlay::turn_info<point_type> turn_info;
 
     std::vector<turn_info> turns;
 
-    ///bg::get_intersection_points(geometry, turns);
+    strategy_type strategy;
+    rescale_policy_type rescale_policy;
 
     bg::detail::self_get_turn_points::no_interrupt_policy policy;
     bg::self_turns
         <
             bg::detail::overlay::assign_null_policy
-        >(geometry, turns, policy);
+        >(geometry, strategy, rescale_policy, turns, policy);
 
 
     typedef typename bg::coordinate_type<Geometry>::type ct;
@@ -72,7 +82,7 @@ static void test_self_intersection_points(std::string const& case_id,
         x += bg::get<0>(turn.point);
         y += bg::get<1>(turn.point);
     }
-    int n = boost::size(turns);
+    std::size_t n = boost::size(turns);
     if (n > 0)
     {
         x /= n;
@@ -90,7 +100,7 @@ static void test_self_intersection_points(std::string const& case_id,
             try
             {
                 boost::geometry::detail::overlay::has_self_intersections(geometry);
-                BOOST_CHECK_MESSAGE(false, "Case " << case_id << " there are no self-intersections detected!"); 
+                BOOST_CHECK_MESSAGE(false, "Case " << case_id << " there are no self-intersections detected!");
             }
             catch(...)
             {
@@ -107,7 +117,7 @@ static void test_self_intersection_points(std::string const& case_id,
             }
             catch(...)
             {
-                BOOST_CHECK_MESSAGE(false, "Case " << case_id << " there are self-intersections detected!"); 
+                BOOST_CHECK_MESSAGE(false, "Case " << case_id << " there are self-intersections detected!");
             }
         }
     }
@@ -152,17 +162,16 @@ void test_self_overlay(std::string const& case_id, T const& expected,
 
 
 template <typename P>
-void test_self_all()
+void test_self_poly()
 {
     typedef bg::model::polygon<P> polygon;
-    typedef bg::model::linestring<P> linestring;
 
     // Just a normal polygon
     test_self_overlay<polygon>("1", 0,
             "POLYGON((0 0,0 4,1.5 2.5,2.5 1.5,4 0,0 0))");
 
     // TODO: clean-up and visualize testcases
-        
+
     // Self intersecting
     test_self_overlay<polygon>("2", 2,
             "POLYGON((1 2,1 1,2 1,2 2.25,3 2.25,3 0,0 0,0 3,3 3,2.75 2,1 2))");
@@ -230,7 +239,7 @@ void test_self_all()
     //   ----s-C------
     // C=closing point, s=similar point, lying a little south-west. This causes a c/c (continue) intersection point.
     // Was caused by error in neighbouring (get_turns.cpp)
-    std::string const ticket_9081_20873 = 
+    std::string const ticket_9081_20873 =
         "POLYGON((0.5246796698528305436  0.56288112949742163948,"
                  "0.52467966985283021053 0.56288112949742141744,"
                                                                    "0.51150490059304598578 0.55384245388529118603,0.51053725440836283944 0.56288079068493779289,"
@@ -243,13 +252,25 @@ void test_self_all()
     test_self_overlay<polygon>("ggl_list_2013_11_06_joan", 0, ggl_list_2013_11_06_joan);
 
     test_self_overlay<polygon>("ggl_list_20131119_james", 0, ggl_list_20131119_james[0]);
+}
 
-    // Same case - but if this is a linestring. 
+template <typename P>
+void test_self_ls()
+{
+    //typedef bg::model::linestring<P> linestring;
+
+    // Same case - but if this is a linestring.
     // TODO: this does not compile yet, but it should return 1 intersection point at the "closing" point
     // std::string const ggl_list_2013_11_06_joan_linestring = "LINESTRING(137.14632454923444 200.61927877947369,50 224, 323 497,255 169,137.14632454923444 200.61927877947369)";
     // test_self_overlay<linestring>("ggl_list_2013_11_06_joan_linestring", 1, ggl_list_2013_11_06_joan_linestring);
 }
 
+template <typename P>
+void test_self_all()
+{
+    test_self_poly<P>();
+    test_self_ls<P>();
+}
 
 int test_main(int, char* [])
 {

@@ -1,4 +1,4 @@
-//  (C) Copyright Gennadiy Rozental 2011-2012.
+//  (C) Copyright Gennadiy Rozental 2001.
 //  Distributed under the Boost Software License, Version 1.0.
 //  (See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
@@ -60,7 +60,7 @@ operator<<( assertion_evaluate_t<E> const& ae, T const& ) { return ae; }
 
 template<typename T>
 inline unit_test::lazy_ostream const&
-assertion_text( unit_test::lazy_ostream const& et, T const& m ) { return m; }
+assertion_text( unit_test::lazy_ostream const& /*et*/, T const& m ) { return m; }
 
 //____________________________________________________________________________//
 
@@ -84,7 +84,7 @@ inline assertion_type
 operator<<( assertion_type const& at, T const& ) { return at; }
 
 //____________________________________________________________________________//
- 
+
 } // namespace tt_detail
 } // namespace test_tools
 } // namespace boost

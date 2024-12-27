@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 //  Adaptation to Boost of the libcxx
 //  Copyright 2010 Vicente J. Botet Escriba
+//  Copyright (c) Microsoft Corporation 2014
 //  Distributed under the Boost Software License, Version 1.0.
 //  See http://www.boost.org/LICENSE_1_0.txt
 
@@ -67,7 +68,7 @@ void check_clock_now_err(int err)
         typename Clock::time_point t1 = Clock::now();
     } catch (boost::system::system_error& ex) {
         BOOST_TEST(ex.code().value()==err);
-//      BOOST_TEST(ex.code().category() == BOOST_CHRONO_SYSTEM_CATEGORY);
+//      BOOST_TEST(ex.code().category() == ::boost::system::system_category());
 //      BOOST_TEST(std::string(ex.what()) == std::string("errored_clock"));
     }
     Clock::set_errno(0);
@@ -81,7 +82,7 @@ void check_clock_now_ec_err(int err)
     boost::system::error_code ec;
     typename Clock::time_point t1 = Clock::now(ec);
     BOOST_TEST(ec.value()==err);
-//  BOOST_TEST(ec.category() == BOOST_CHRONO_SYSTEM_CATEGORY);
+//  BOOST_TEST(ec.category() == ::boost::system::system_category());
     Clock::set_errno(0);
 }
 
@@ -95,7 +96,7 @@ void check_clock_now_throws_err(int err)
         BOOST_TEST(0&&"exception not thown");
     } catch (boost::system::system_error& ex) {
         BOOST_TEST(ex.code().value()==err);
-//      BOOST_TEST(ex.code().category() == BOOST_CHRONO_SYSTEM_CATEGORY);
+//      BOOST_TEST(ex.code().category() == ::boost::system::system_category());
 //      BOOST_TEST(std::string(ex.what()) == std::string("errored_clock"));
     }
     Clock::set_errno(0);
@@ -145,6 +146,7 @@ int main()
     BOOST_CHRONO_STATIC_ASSERT(boost::chrono::process_real_cpu_clock::is_steady, NOTHING, ());
     check_clock_now<boost::chrono::process_real_cpu_clock>();
 
+#if ! BOOST_OS_WINDOWS || BOOST_PLAT_WINDOWS_DESKTOP
     check_clock_invariants<boost::chrono::process_user_cpu_clock>();
     BOOST_CHRONO_STATIC_ASSERT(boost::chrono::process_user_cpu_clock::is_steady, NOTHING, ());
     check_clock_now<boost::chrono::process_user_cpu_clock>();
@@ -156,6 +158,7 @@ int main()
     check_clock_invariants<boost::chrono::process_cpu_clock>();
     BOOST_CHRONO_STATIC_ASSERT(boost::chrono::process_cpu_clock::is_steady, NOTHING, ());
     check_clock_now<boost::chrono::process_cpu_clock>();
+#endif
 #endif
 
 
@@ -180,6 +183,7 @@ int main()
     check_clock_now_ec<boost::chrono::process_real_cpu_clock>();
     check_clock_now_throws<boost::chrono::process_real_cpu_clock>();
 
+#if ! BOOST_OS_WINDOWS || BOOST_PLAT_WINDOWS_DESKTOP
     check_clock_now_ec<boost::chrono::process_user_cpu_clock>();
     check_clock_now_throws<boost::chrono::process_user_cpu_clock>();
 
@@ -188,6 +192,7 @@ int main()
 
     check_clock_now_ec<boost::chrono::process_cpu_clock>();
     check_clock_now_throws<boost::chrono::process_cpu_clock>();
+#endif
 #endif
 
 #endif

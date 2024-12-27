@@ -5,110 +5,142 @@
           http://www.boost.org/LICENSE_1_0.txt)
 */
 
-/*******************************************************************
- *                                                                 *
- *  -------------------------------------------------------------  *
- *  |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |  8  |  9  |  *
- *  -------------------------------------------------------------  *
- *  |  0  |  4  |  8  |  12 |  16 |  20 |  24 |  28 |  32 |  36 |  *
- *  -------------------------------------------------------------  *
- *  | R13 | R14 | R15 | R16 | R17 | R18 | R19 | R20 | R21 | R22 |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  10 |  11 |  12 |  13 |  14 |  15 |  16 |  17 |  18 |  19 |  *
- *  -------------------------------------------------------------  *
- *  |  40 |  44 |  48 |  52 |  56 |  60 |  64 |  68 |  72 |  76 |  *
- *  -------------------------------------------------------------  *
- *  | R23 | R24 | R25 | R26 | R27 | R28 | R29 | R30 | R31 |  SP |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  20 |  21 |  22 |                                         |  *
- *  -------------------------------------------------------------  *
- *  |  80 |  84 |  88 |                                         |  *
- *  -------------------------------------------------------------  *
- *  |  CR |  LR |  PC |                                         |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  23 |  24 |  25 |                                         |  *
- *  -------------------------------------------------------------  *
- *  |  92 |  96 | 100 |                                         |  *
- *  -------------------------------------------------------------  *
- *  |  sp | size|<pad>|                                         |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  26 |  27 |  28 |  29 |  30 |  31 |  32 |  33 |  34 |  35 |  *
- *  -------------------------------------------------------------  *
- *  | 104 | 108 | 112 | 116 | 120 | 124 | 128 | 132 | 136 | 140 |  *
- *  -------------------------------------------------------------  *
- *  |    F14    |    F15    |    F16    |    F17    |    F18    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  36 |  37 |  38 |  39 |  40 |  41 |  42 |  43 |  44 |  45 |  *
- *  -------------------------------------------------------------  *
- *  | 144 | 148 | 152 | 156 | 160 | 164 | 168 | 172 | 176 | 180 |  *
- *  -------------------------------------------------------------  *
- *  |    F19    |    F20    |    F21    |    F22    |    F23    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  46 |  47 |  48 |  49 |  50 |  51 |  52 |  53 |  54 |  55 |  *
- *  -------------------------------------------------------------  *
- *  | 184 | 188 | 192 | 196 | 200 | 204 | 208 | 212 | 216 | 220 |  *
- *  -------------------------------------------------------------  *
- *  |    F24    |    F25    |    F26    |    F27    |    F28    |  *
- *  -------------------------------------------------------------  *
- *  -------------------------------------------------------------  *
- *  |  56 |  57 |  58 |  59 |  60 |  61 |  62 |  63 |           |  *
- *  -------------------------------------------------------------  *
- *  | 224 | 228 | 232 | 236 | 240 | 244 | 248 | 252 |           |  *
- *  -------------------------------------------------------------  *
- *  |    F29    |    F30    |    F31    |   fpscr   |           |  *
- *  -------------------------------------------------------------  *
- *                                                                 *
- * *****************************************************************/
+/*******************************************************
+ *                                                     *
+ *  -------------------------------------------------  *
+ *  |  0  |  4  |  8  |  12 |  16 |  20 |  24 |  28 |  *
+ *  -------------------------------------------------  *
+ *  |bchai|hiddn|   fpscr   |  PC |  CR | R14 | R15 |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  32 |  36 |  40 |  44 |  48 |  52 |  56 |  60 |  *
+ *  -------------------------------------------------  *
+ *  | R16 | R17 | R18 | R19 | R20 | R21 | R22 | R23 |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  64 |  68 |  72 |  76 |  80 |  84 |  88 |  92 |  *
+ *  -------------------------------------------------  *
+ *  | R24 | R25 | R26 | R27 | R28 | R29 | R30 | R31 |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  |  96 | 100 | 104 | 108 | 112 | 116 | 120 | 124 |  *
+ *  -------------------------------------------------  *
+ *  |    F14    |    F15    |    F16    |    F17    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  | 128 | 132 | 136 | 140 | 144 | 148 | 152 | 156 |  *
+ *  -------------------------------------------------  *
+ *  |    F18    |    F19    |    F20    |    F21    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  | 160 | 164 | 168 | 172 | 176 | 180 | 184 | 188 |  *
+ *  -------------------------------------------------  *
+ *  |    F22    |    F23    |    F24    |    F25    |  *
+ *  -------------------------------------------------  *
+ *  -------------------------------------------------  *
+ *  | 192 | 196 | 200 | 204 | 208 | 212 | 216 | 220 |  *
+ *  -------------------------------------------------  *
+ *  |    F26    |    F27    |    F28    |    F29    |  *
+ *  -------------------------------------------------  *
+ *  ------------------------|------------              *
+ *  | 224 | 228 | 232 | 236 | 240 | 244 |              *
+ *  ------------------------|------------              *
+ *  |    F30    |    F31    |bchai|  LR |              *
+ *  ------------------------|------------              *
+ *                                                     *
+ *******************************************************/
 
+.file "make_ppc32_sysv_elf_gas.S"
 .text
 .globl make_fcontext
 .align 2
 .type make_fcontext,@function
 make_fcontext:
-    mflr    %r6                 # save return address into R6
+    # save return address into R6
+    mflr  %r6
 
-    mr      %r0, %r3
-    subi    %r3, %r3, 256       # reserve space for fcontext_t at top of context stack
-
-    # call align_stack, R3 contains address at 16 byte boundary after return
-    # == pointer to fcontext_t and address of context stack
+    # first arg of make_fcontext() == top address of context-function
+    # shift address in R3 to lower 16 byte boundary
     clrrwi  %r3, %r3, 4
 
-    stw     %r0, 92(%r3)        # save address of context stack (base) in fcontext_t
-    stw     %r4, 96(%r3)        # save context stack size in fcontext_t
-    stw     %r5, 88(%r3)        # save address of context function in fcontext_t
+    # reserve space on context-stack, including 16 bytes of linkage
+    # and parameter area + 240 bytes of context-data (R1 % 16 == 0)
+    subi  %r3, %r3, 16 + 240
 
-    subi    %r0, %r3, 64        # reserve 64 bytes (linkage + parameter area), R4 % 16 == 0
-    stw     %r0, 76(%r3)        # save address in R3 as stack pointer for context function
+    # third arg of make_fcontext() == address of context-function
+#ifdef __linux__
+    # save context-function as PC
+    stw  %r5, 16(%r3)
+#else
+    # save context-function for trampoline
+    stw  %r5, 248(%r3)
+#endif
 
-    mflr    %r0                 # load LR
-    bl      1f                  # jump to label 1
-1:
-    mflr    %r4                      # load LR into R4
-    addi    %r4, %r4, finish - 1b    # compute abs address of label finish
-    mtlr    %r0                      # restore LR
-    stw     %r4, 84(%r3)             # save address of finish as return address for context function
-                                     # entered after context function returns
+    # set back-chain to zero
+    li   %r0, 0
+    stw  %r0, 240(%r3)
 
-    mtlr    %r6                 # restore return address from R6
+    # copy FPSCR to new context
+    mffs  %f0
+    stfd  %f0, 8(%r3)
 
-    blr
+#ifdef __linux__
+    # set hidden pointer for returning transfer_t
+    la    %r0, 248(%r3)
+    stw   %r0, 4(%r3)
+#endif
+
+    # load address of label 1 into R4
+    bl  1f
+1:  mflr  %r4
+#ifndef __linux__
+    # compute abs address of trampoline, use as PC
+    addi  %r7, %r4, trampoline - 1b
+    stw   %r7, 16(%r3)
+#endif
+    # compute abs address of label finish
+    addi  %r4, %r4, finish - 1b
+    # save address of finish as return-address for context-function
+    # will be entered after context-function returns
+    stw  %r4, 244(%r3)
+
+    # restore return address from R6
+    mtlr  %r6
+
+    blr  # return pointer to context-data
+
+#ifndef __linux__
+trampoline:
+    # On systems other than Linux, jump_fcontext is returning the
+    # transfer_t in R3:R4, but we need to pass transfer_t * R3 to
+    # our context-function.
+    lwz   %r0, 8(%r1)   # address of context-function
+    mtctr %r0
+    stw   %r3, 8(%r1)
+    stw   %r4, 12(%r1)
+    la    %r3, 8(%r1)   # address of transfer_t
+    bctr
+#endif
 
 finish:
-    # SP points to same address as SP on entry of context function
-    mflr    %r0                 # save return address into R0
-    stw     %r0, 4(%r1)         # save return address on stack, set up stack frame
-    stwu    %r1, -16(%r1)       # allocate stack space, SP % 16 == 0
+    # Use the secure PLT for _exit(0).  If we use the insecure BSS PLT
+    # here, then the linker may use the insecure BSS PLT even if the
+    # C++ compiler wanted the secure PLT.
 
-    li      %r3,  0             # exit code is zero
-    bl      _exit@plt           # exit application
+    # set R30 for secure PLT, large model
+    bl     2f
+2:  mflr   %r30
+    addis  %r30, %r30, .Ltoc - 2b@ha
+    addi   %r30, %r30, .Ltoc - 2b@l
+
+    # call _exit(0) with special addend 0x8000 for large model
+    li  %r3, 0
+    bl  _exit + 0x8000@plt
 .size make_fcontext, .-make_fcontext
+
+/* Provide the GOT pointer for secure PLT, large model. */
+.section .got2,"aw"
+.Ltoc = . + 0x8000
 
 /* Mark that we don't need executable stack.  */
 .section .note.GNU-stack,"",%progbits

@@ -25,9 +25,10 @@ rule test_all
       :  # additional args
         <toolset>acc:<linkflags>-lrt
         <toolset>acc-pa_risc:<linkflags>-lrt
-        <toolset>gcc-mingw:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
-        <host-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
-        <host-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <toolset>gcc,<target-os>windows:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
+        <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>linux:<linkflags>"-lrt"
       :  # test-files
       :  # requirements
       ] ;
@@ -42,8 +43,9 @@ rule test_all
         <toolset>acc:<linkflags>-lrt
         <toolset>acc-pa_risc:<linkflags>-lrt
         <toolset>gcc-mingw:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
-        <host-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
-        <host-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>hpux,<toolset>gcc:<linkflags>"-Wl,+as,mpas"
+        <target-os>windows,<toolset>clang:<linkflags>"-lole32 -loleaut32 -lpsapi -ladvapi32"
+        <target-os>linux:<linkflags>"-lrt"
       ] ;
    }
 

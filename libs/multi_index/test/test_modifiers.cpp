@@ -1,6 +1,6 @@
 /* Boost.MultiIndex test for modifier memfuns.
  *
- * Copyright 2003-2013 Joaquin M Lopez Munoz.
+ * Copyright 2003-2018 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +13,9 @@
 #include <boost/config.hpp> /* keep it first to prevent nasty warns in MSVC */
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 #include <boost/move/core.hpp>
+#include <boost/move/utility_core.hpp>
 #include <boost/next_prior.hpp>
 #include <boost/shared_ptr.hpp>
 #include <iterator>
@@ -121,6 +123,39 @@ private:
 };
 
 linked_object::impl_repository_t linked_object::impl_repository;
+
+struct tempvalue_iterator:
+  boost::iterator_facade<
+    tempvalue_iterator,int,boost::forward_traversal_tag,int>
+{
+  tempvalue_iterator(int n_):n(n_){}
+  
+  void increment(){++n;}
+  bool equal(const tempvalue_iterator& x)const{return n==x.n;}
+  int dereference()const{return n;}
+  
+  int n;
+};
+
+struct change_int
+{
+  change_int(int n):n(n){}
+
+  void operator()(int& x)const{x=n;}
+
+  int n;
+};
+
+#if !(defined BOOST_NO_EXCEPTIONS)
+struct change_int_and_throw
+{
+  change_int_and_throw(int n):n(n){}
+
+  void operator()(int& x)const{x=n;throw 0;}
+
+  int n;
+};
+#endif
 
 void test_modifiers()
 {
@@ -460,5 +495,87 @@ void test_modifiers()
     linked_object o1(1);
     linked_object o2(2,o1);
     o1=o2;
+  }
+
+  /* testcases for bug reported at
+   * https://svn.boost.org/trac/boost/ticket/9665
+   */
+
+  {
+    multi_index_container<
+      int,
+      indexed_by<hashed_unique<identity<int> > >
+    > hc;
+    hc.insert(tempvalue_iterator(0),tempvalue_iterator(10));
+    BOOST_TEST(hc.size()==10);
+
+    multi_index_container<
+      int,
+      indexed_by<ordered_unique<identity<int> > >
+    > oc;
+    oc.insert(tempvalue_iterator(0),tempvalue_iterator(10));
+    BOOST_TEST(oc.size()==10);
+  }
+
+  /* testcases for https://svn.boost.org/trac10/ticket/12542 */
+
+  {
+    multi_index_container<
+      int,
+      indexed_by<
+        ordered_unique<identity<int> >,
+        hashed_unique<identity<int> >
+     >
+    > ohc;
+
+#if !(defined BOOST_NO_EXCEPTIONS)
+    ohc.insert(0);
+    ohc.insert(1);
+
+    try{
+      ohc.modify_key(ohc.begin(),change_int_and_throw(1));
+    }
+    catch(int){}
+    BOOST_TEST(ohc.size()==1);
+    ohc.clear();
+
+    ohc.insert(0);
+    ohc.insert(1);
+
+    try{
+      ohc.modify_key(ohc.begin(),change_int_and_throw(1),change_int(0));
+    }
+    catch(int){}
+    BOOST_TEST(ohc.size()==1);
+    ohc.clear();
+
+    ohc.insert(0);
+    ohc.insert(1);
+
+    try{
+      ohc.modify_key(
+        ohc.begin(),change_int_and_throw(1),change_int_and_throw(0));
+    }
+    catch(int){}
+    BOOST_TEST(ohc.size()==1);
+    ohc.clear();
+
+    ohc.insert(0);
+    ohc.insert(1);
+
+    try{
+      ohc.modify_key(ohc.begin(),change_int(1),change_int_and_throw(0));
+    }
+    catch(int){}
+    BOOST_TEST(ohc.size()==1);
+    ohc.clear();
+#endif
+
+    ohc.insert(0);
+    ohc.insert(1);
+
+    ohc.modify_key(ohc.begin(),change_int(1),change_int(1));
+    BOOST_TEST(ohc.size()==1);
+    ohc.clear();
   }
 }

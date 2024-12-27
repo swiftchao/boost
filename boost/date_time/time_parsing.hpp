@@ -12,6 +12,7 @@
 #include "boost/tokenizer.hpp"
 #include "boost/lexical_cast.hpp"
 #include "boost/date_time/date_parsing.hpp"
+#include "boost/date_time/special_values_parser.hpp"
 #include "boost/cstdint.hpp"
 #include <iostream>
 
@@ -81,6 +82,23 @@ namespace date_time {
       };
       case 3: {
         int digits = static_cast<int>(beg->length());
+        //Works around a bug in MSVC 6 library that does not support
+        //operator>> thus meaning lexical_cast will fail to compile.
+#if (defined(BOOST_MSVC) && (_MSC_VER < 1300))
+        // msvc wouldn't compile 'time_duration::num_fractional_digits()' 
+        // (required template argument list) as a workaround a temp 
+        // time_duration object was used
+        time_duration td(hour,min,sec,fs);
+        int precision = td.num_fractional_digits();
+        // _atoi64 is an MS specific function
+        if(digits >= precision) {
+          // drop excess digits
+          fs = _atoi64(beg->substr(0, precision).c_str());
+        }
+        else {
+          fs = _atoi64(beg->c_str());
+        }
+#else
         int precision = time_duration::num_fractional_digits();
         if(digits >= precision) {
           // drop excess digits
@@ -89,6 +107,7 @@ namespace date_time {
         else {
           fs = boost::lexical_cast<boost::int64_t>(*beg);
         }
+#endif
         if(digits < precision){
           // trailing zeros get dropped from the string, 
           // "1:01:01.1" would yield .000001 instead of .100000
@@ -228,6 +247,22 @@ namespace date_time {
           {
             std::string char_digits(ti->substr(1)); // digits w/no decimal
             int digits = static_cast<int>(char_digits.length());
+            
+            //Works around a bug in MSVC 6 library that does not support
+            //operator>> thus meaning lexical_cast will fail to compile.
+#if (defined(BOOST_MSVC) && (_MSC_VER <= 1200))  // 1200 == VC++ 6.0
+            // _atoi64 is an MS specific function
+            if(digits >= precision) {
+              // drop excess digits
+              fs = _atoi64(char_digits.substr(0, precision).c_str());
+            }
+            else if(digits == 0) {
+              fs = 0; // just in case _atoi64 doesn't like an empty string
+            }
+            else {
+              fs = _atoi64(char_digits.c_str());
+            }
+#else
             if(digits >= precision) {
               // drop excess digits
               fs = boost::lexical_cast<boost::int64_t>(char_digits.substr(0, precision));
@@ -238,6 +273,7 @@ namespace date_time {
             else {
               fs = boost::lexical_cast<boost::int64_t>(char_digits);
             }
+#endif
             if(digits < precision){
               // trailing zeros get dropped from the string, 
               // "1:01:01.1" would yield .000001 instead of .100000
@@ -267,6 +303,25 @@ namespace date_time {
   {
     typedef typename time_type::time_duration_type time_duration;
     typedef typename time_type::date_type date_type;
+    typedef special_values_parser<date_type, std::string::value_type> svp_type;
+
+    // given to_iso_string can produce a special value string
+    // then from_iso_string should be able to read a special value string
+    // the special_values_parser is expensive to set up and not thread-safe
+    // so it cannot be static, so we need to be careful about when we use it
+    if (svp_type::likely(s)) {
+        typedef typename svp_type::stringstream_type ss_type;
+        typedef typename svp_type::stream_itr_type itr_type;
+        typedef typename svp_type::match_results mr_type;
+        svp_type p; // expensive
+        mr_type mr;
+        ss_type ss(s);
+        itr_type itr(ss);
+        itr_type end;
+        if (p.match(itr, end, mr)) {
+            return time_type(static_cast<special_values>(mr.current_match));
+        }
+    }
 
     //split date/time on a unique delimiter char such as ' ' or 'T'
     std::string date_string, tod_string;

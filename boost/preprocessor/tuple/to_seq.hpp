@@ -26,10 +26,10 @@
 #        define BOOST_PP_TUPLE_TO_SEQ(...) BOOST_PP_TUPLE_TO_SEQ_I(BOOST_PP_OVERLOAD(BOOST_PP_TUPLE_TO_SEQ_O_, __VA_ARGS__), (__VA_ARGS__))
 #        define BOOST_PP_TUPLE_TO_SEQ_I(m, args) BOOST_PP_TUPLE_TO_SEQ_II(m, args)
 #        define BOOST_PP_TUPLE_TO_SEQ_II(m, args) BOOST_PP_CAT(m ## args,)
-#    	 define BOOST_PP_TUPLE_TO_SEQ_O_1(tuple) BOOST_PP_CAT(BOOST_PP_TUPLE_TO_SEQ_, BOOST_PP_TUPLE_SIZE(tuple)) tuple
+#        define BOOST_PP_TUPLE_TO_SEQ_O_1(tuple) BOOST_PP_CAT(BOOST_PP_TUPLE_TO_SEQ_, BOOST_PP_TUPLE_SIZE(tuple)) tuple
 #    else
 #        define BOOST_PP_TUPLE_TO_SEQ(...) BOOST_PP_OVERLOAD(BOOST_PP_TUPLE_TO_SEQ_O_, __VA_ARGS__)(__VA_ARGS__)
-#    	 define BOOST_PP_TUPLE_TO_SEQ_O_1(tuple) BOOST_PP_CAT(BOOST_PP_TUPLE_TO_SEQ_, BOOST_PP_VARIADIC_SIZE tuple) tuple
+#        define BOOST_PP_TUPLE_TO_SEQ_O_1(tuple) BOOST_PP_CAT(BOOST_PP_TUPLE_TO_SEQ_, BOOST_PP_VARIADIC_SIZE tuple) tuple
 #    endif
 #    define BOOST_PP_TUPLE_TO_SEQ_O_2(size, tuple) BOOST_PP_TUPLE_TO_SEQ_O_1(tuple)
 # else
@@ -47,6 +47,9 @@
 #        define BOOST_PP_TUPLE_TO_SEQ_I(s, t) BOOST_PP_TUPLE_TO_SEQ_ ## s ## t
 #    endif
 # endif
+#
+/* An empty array can be passed */
+# define BOOST_PP_TUPLE_TO_SEQ_0() ()
 #
 # define BOOST_PP_TUPLE_TO_SEQ_1(e0) (e0)
 # define BOOST_PP_TUPLE_TO_SEQ_2(e0, e1) (e0)(e1)

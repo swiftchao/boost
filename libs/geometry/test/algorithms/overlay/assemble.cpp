@@ -3,6 +3,11 @@
 
 // Copyright (c) 2010-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
+// This file was modified by Oracle on 2019.
+// Modifications copyright (c) 2019, Oracle and/or its affiliates.
+
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -22,6 +27,7 @@
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
 #include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/policies/robustness/get_rescale_policy.hpp>
 
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -40,7 +46,6 @@
 template <typename Geometry>
 inline void test_assemble(std::string const& id, Geometry const& p, Geometry const& q, char operation = 'i')
 {
-
     std::vector<Geometry> u, i, d1, d2;
     bg::detail::union_::union_insert<Geometry>(p, q, std::back_inserter(u));
     bg::detail::intersection::intersection_insert<Geometry>(p, q, std::back_inserter(i));
@@ -72,21 +77,13 @@ inline void test_assemble(std::string const& id, Geometry const& p, Geometry con
             area_d2 += bg::area(g);
         }
 
-
         type diff = (area_p + area_q) - area_u - area_i;
         type diff_d1 = (area_u - area_q) - area_d1;
         type diff_d2 = (area_u - area_p) - area_d2;
 
-        BOOST_CHECK_CLOSE(diff, 0.0, 0.001);
-
-        // Gives small deviations on gcc:
-        // difference{0.001%} between diff_d1{1.1102230246251565e-016} and 0.0{0} exceeds 0.001%
-        //BOOST_CHECK_CLOSE(diff_d1, 0.0, 0.001);
-        //BOOST_CHECK_CLOSE(diff_d2, 0.0, 0.001);
-
-        bool ok = abs(diff) < 0.001
-            || abs(diff_d1) < 0.001
-            || abs(diff_d2) < 0.001;
+        bool ok = bg::math::abs(diff) < 0.001
+            && bg::math::abs(diff_d1) < 0.001
+            && bg::math::abs(diff_d2) < 0.001;
 
         BOOST_CHECK_MESSAGE(ok,
             id << " diff:  "

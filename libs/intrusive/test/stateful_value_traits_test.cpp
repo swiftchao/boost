@@ -57,16 +57,16 @@ struct stateful_value_traits
       :  values_(vals),  node_array_(node_array)
    {}
 
-   node_ptr to_node_ptr (value_type &value)
+   node_ptr to_node_ptr (value_type &value) const
    {  return node_array_ + (&value - values_); }
 
    const_node_ptr to_node_ptr (const value_type &value) const
    {  return node_array_ + (&value - values_); }
 
-   pointer to_value_ptr(node_ptr n)
+   pointer to_value_ptr(const node_ptr &n) const
    {  return values_ + (n - node_array_); }
 
-   const_pointer to_value_ptr(const_node_ptr n) const
+   const_pointer to_value_ptr(const const_node_ptr &n) const
    {  return values_ + (n - node_array_); }
 
    pointer  values_;
@@ -123,9 +123,18 @@ int main()
       ; it != itend
       ; ++it){
       my_list.push_front(*it);
+      if(&*my_list.iterator_to(*it) != &my_list.front())
+         return 1;
       my_slist.push_front(*it);
-      my_set.insert(*it);
+      if(&*my_slist.iterator_to(*it) != &my_slist.front())
+         return 1;
+      Set::iterator sit = my_set.insert(*it).first;
+      if(&*my_set.iterator_to(*it) != &*sit)
+         return 1;
+      Uset::iterator uit = my_uset.insert(*it).first;
       my_uset.insert(*it);
+      if(&*my_uset.iterator_to(*it) != &*uit)
+         return 1;
    }
 
    //Now test lists
@@ -133,14 +142,14 @@ int main()
       List::const_iterator   list_it (my_list.cbegin());
       Slist::const_iterator  slist_it(my_slist.cbegin());
       Set::const_reverse_iterator set_rit(my_set.crbegin());
-      MyClass *it_val(&values[NumElements-1]), *it_rbeg_val(&values[0]-1);
+      MyClass *it_val(&values[NumElements]), *it_rbeg_val(&values[0]);
 
       //Test the objects inserted in the base hook list
       for(; it_val != it_rbeg_val; --it_val, ++list_it, ++slist_it, ++set_rit){
-         if(&*list_it  != &*it_val)   return 1;
-         if(&*slist_it != &*it_val)   return 1;
-         if(&*set_rit  != &*it_val)   return 1;
-         if(my_uset.find(*it_val) == my_uset.cend())  return 1;
+         if(&*list_it  != &it_val[-1])   return 1;
+         if(&*slist_it != &it_val[-1])   return 1;
+         if(&*set_rit  != &it_val[-1])   return 1;
+         if(my_uset.find(it_val[-1]) == my_uset.cend())  return 1;
       }
    }
 

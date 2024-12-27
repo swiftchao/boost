@@ -89,15 +89,18 @@ void test_classify(T t, const char* type)
       if(t != 0)
       {
          BOOST_CHECK_EQUAL((::boost::math::fpclassify)(t), (int)FP_NORMAL);
-         BOOST_CHECK_EQUAL((::boost::math::fpclassify)(-t), (int)FP_NORMAL);
          BOOST_CHECK_EQUAL((::boost::math::isfinite)(t), true);
-         BOOST_CHECK_EQUAL((::boost::math::isfinite)(-t), true);
          BOOST_CHECK_EQUAL((::boost::math::isinf)(t), false);
-         BOOST_CHECK_EQUAL((::boost::math::isinf)(-t), false);
          BOOST_CHECK_EQUAL((::boost::math::isnan)(t), false);
-         BOOST_CHECK_EQUAL((::boost::math::isnan)(-t), false);
          BOOST_CHECK_EQUAL((::boost::math::isnormal)(t), true);
-         BOOST_CHECK_EQUAL((::boost::math::isnormal)(-t), true);
+         if(!std::numeric_limits<T>::is_integer)
+         {
+            BOOST_CHECK_EQUAL((::boost::math::fpclassify)(-t), (int)FP_NORMAL);
+            BOOST_CHECK_EQUAL((::boost::math::isfinite)(-t), true);
+            BOOST_CHECK_EQUAL((::boost::math::isinf)(-t), false);
+            BOOST_CHECK_EQUAL((::boost::math::isnormal)(-t), true);
+            BOOST_CHECK_EQUAL((::boost::math::isnan)(-t), false);
+         }
       }
    }
    if(std::numeric_limits<T>::has_denorm)
@@ -275,10 +278,11 @@ BOOST_AUTO_TEST_CASE( test_main )
    // then run the tests:
    test_classify(float(0), "float");
    test_classify(double(0), "double");
-#ifndef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
+   // long double support for fpclassify is considered "core" so we always test it
+   // even when long double support is turned off via BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    test_classify((long double)(0), "long double");
    test_classify((boost::math::concepts::real_concept)(0), "real_concept");
-#endif
+
    // We should test with integer types as well:
    test_classify(int(0), "int");
    test_classify(unsigned(0), "unsigned");

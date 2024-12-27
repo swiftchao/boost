@@ -12,7 +12,7 @@
 #include <boost/detail/workaround.hpp>
 
 #if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
-#  pragma warn -8091 // supress warning in Boost.Test
+#  pragma warn -8091 // suppress warning in Boost.Test
 #  pragma warn -8057 // unused argument argc/argv in Boost.Test
 #endif
 
@@ -21,7 +21,19 @@
 #include <utility>
 #include <string>
 
-using namespace std;
+using std::deque;
+using std::list;
+using std::vector;
+using std::set;
+using std::multiset;
+using std::map;
+using std::multimap;
+using std::stack;
+using std::queue;
+using std::priority_queue;
+using std::string;
+using std::pair;
+using std::make_pair;
 using namespace boost::assign;  
     
 template< typename K, typename V >
@@ -75,7 +87,7 @@ void test_string_sequence()
 
 
 
-typedef pair<string,int> tuple; 
+typedef pair<string,int> two_tuple;
 
 template< class C >
 void test_tuple_sequence()
@@ -151,14 +163,14 @@ void check_std()
     test_string_sequence< queue<string> >();             
     test_string_sequence< priority_queue<string> >();    
 
-    test_tuple_sequence< deque<tuple> >();             
-    test_tuple_sequence< list<tuple> >();              
-    test_tuple_sequence< vector<tuple> >();            
-    test_tuple_sequence< set<tuple> >();               
-    test_tuple_sequence< multiset<tuple> >();          
-    test_tuple_sequence< stack<tuple> >();             
-    test_tuple_sequence< queue<tuple> >();             
-    test_tuple_sequence< priority_queue<tuple> >();    
+    test_tuple_sequence< deque<two_tuple> >();             
+    test_tuple_sequence< list<two_tuple> >();              
+    test_tuple_sequence< vector<two_tuple> >();            
+    test_tuple_sequence< set<two_tuple> >();               
+    test_tuple_sequence< multiset<two_tuple> >();          
+    test_tuple_sequence< stack<two_tuple> >();             
+    test_tuple_sequence< queue<two_tuple> >();             
+    test_tuple_sequence< priority_queue<two_tuple> >();    
     test_tuple();
     
     deque<int>          di; 

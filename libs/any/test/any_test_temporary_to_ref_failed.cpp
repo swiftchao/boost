@@ -2,7 +2,7 @@
 //
 //  See http://www.boost.org for most recent version, including documentation.
 //
-//  Copyright Antony Polukhin, 2013.
+//  Copyright Antony Polukhin, 2013-2019.
 //
 //  Distributed under the Boost
 //  Software License, Version 1.0. (See accompanying file
@@ -12,8 +12,8 @@
 #include <string>
 #include <utility>
 
-#include "boost/any.hpp"
-#include "../test.hpp"
+#include <boost/any.hpp>
+#include "test.hpp"
 #include <boost/move/move.hpp>
 
 #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
